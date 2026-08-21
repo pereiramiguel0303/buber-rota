@@ -151,12 +151,19 @@ export const LINES_BY_ID: Record<string, Line> = Object.fromEntries(
   LINES.map((l) => [l.id, l]),
 );
 
-/** Polilinha da rota (sequência de coordenadas dos pontos da linha). */
+/** Polilinha da rota traçada sobre as ruas reais da cidade. */
 export function lineShape(line: Line): [number, number][] {
+  const shape = ROUTE_SHAPES[line.id];
+  if (shape) return shape.coords;
   return line.stopIds.map((id) => {
     const s = STOPS_BY_ID[id]!;
     return [s.lon, s.lat];
   });
+}
+
+/** Índice, na polilinha, de cada ponto de parada da linha. */
+export function lineStopIndexes(line: Line): number[] {
+  return ROUTE_SHAPES[line.id]?.stopIdx ?? line.stopIds.map((_, i) => i);
 }
 
 export function linesForStop(stopId: string): Line[] {
