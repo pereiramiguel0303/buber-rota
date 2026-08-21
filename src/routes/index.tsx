@@ -14,9 +14,9 @@ import {
 const CityMap = lazy(() => import("@/components/map/CityMap"));
 
 interface MapSearch {
-  linha?: string;
-  onibus?: string;
-  ponto?: string;
+  linha?: string | undefined;
+  onibus?: string | undefined;
+  ponto?: string | undefined;
 }
 
 export const Route = createFileRoute("/")({
