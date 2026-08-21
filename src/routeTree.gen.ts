@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as LinhasIndexRouteImport } from './routes/linhas.index'
 import { Route as LinhasLineIdRouteImport } from './routes/linhas.$lineId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritosRoute = FavoritosRouteImport.update({
+  id: '/favoritos',
+  path: '/favoritos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LinhasIndexRoute = LinhasIndexRouteImport.update({
@@ -31,30 +37,34 @@ const LinhasLineIdRoute = LinhasLineIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/favoritos': typeof FavoritosRoute
   '/linhas/$lineId': typeof LinhasLineIdRoute
   '/linhas/': typeof LinhasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/favoritos': typeof FavoritosRoute
   '/linhas/$lineId': typeof LinhasLineIdRoute
   '/linhas': typeof LinhasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/favoritos': typeof FavoritosRoute
   '/linhas/$lineId': typeof LinhasLineIdRoute
   '/linhas/': typeof LinhasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/linhas/$lineId' | '/linhas/'
+  fullPaths: '/' | '/favoritos' | '/linhas/$lineId' | '/linhas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/linhas/$lineId' | '/linhas'
-  id: '__root__' | '/' | '/linhas/$lineId' | '/linhas/'
+  to: '/' | '/favoritos' | '/linhas/$lineId' | '/linhas'
+  id: '__root__' | '/' | '/favoritos' | '/linhas/$lineId' | '/linhas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FavoritosRoute: typeof FavoritosRoute
   LinhasLineIdRoute: typeof LinhasLineIdRoute
   LinhasIndexRoute: typeof LinhasIndexRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favoritos': {
+      id: '/favoritos'
+      path: '/favoritos'
+      fullPath: '/favoritos'
+      preLoaderRoute: typeof FavoritosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/linhas/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FavoritosRoute: FavoritosRoute,
   LinhasLineIdRoute: LinhasLineIdRoute,
   LinhasIndexRoute: LinhasIndexRoute,
 }
