@@ -302,5 +302,11 @@ export default function CityMap({
     map.easeTo({ center: [userLocation.lon, userLocation.lat], zoom: 14.5, duration: 900 });
   }, [userLocation]);
 
-  return <div ref={containerRef} className="absolute inset-0" aria-label="Mapa da rede" />;
+  return (
+    <div
+      ref={containerRef}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+      aria-label="Mapa da rede"
+    />
+  );
 }
