@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as FavoritosRouteImport } from './routes/favoritos'
 import { Route as LinhasIndexRouteImport } from './routes/linhas.index'
 import { Route as LinhasLineIdRouteImport } from './routes/linhas.$lineId'
@@ -17,6 +18,11 @@ import { Route as LinhasLineIdRouteImport } from './routes/linhas.$lineId'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AlertasRoute = AlertasRouteImport.update({
+  id: '/alertas',
+  path: '/alertas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FavoritosRoute = FavoritosRouteImport.update({
@@ -37,12 +43,14 @@ const LinhasLineIdRoute = LinhasLineIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
   '/favoritos': typeof FavoritosRoute
   '/linhas/$lineId': typeof LinhasLineIdRoute
   '/linhas/': typeof LinhasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
   '/favoritos': typeof FavoritosRoute
   '/linhas/$lineId': typeof LinhasLineIdRoute
   '/linhas': typeof LinhasIndexRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
   '/favoritos': typeof FavoritosRoute
   '/linhas/$lineId': typeof LinhasLineIdRoute
   '/linhas/': typeof LinhasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/favoritos' | '/linhas/$lineId' | '/linhas/'
+  fullPaths: '/' | '/alertas' | '/favoritos' | '/linhas/$lineId' | '/linhas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/favoritos' | '/linhas/$lineId' | '/linhas'
-  id: '__root__' | '/' | '/favoritos' | '/linhas/$lineId' | '/linhas/'
+  to: '/' | '/alertas' | '/favoritos' | '/linhas/$lineId' | '/linhas'
+  id:
+    | '__root__'
+    | '/'
+    | '/alertas'
+    | '/favoritos'
+    | '/linhas/$lineId'
+    | '/linhas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlertasRoute: typeof AlertasRoute
   FavoritosRoute: typeof FavoritosRoute
   LinhasLineIdRoute: typeof LinhasLineIdRoute
   LinhasIndexRoute: typeof LinhasIndexRoute
@@ -76,6 +92,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/alertas': {
+      id: '/alertas'
+      path: '/alertas'
+      fullPath: '/alertas'
+      preLoaderRoute: typeof AlertasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/favoritos': {
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlertasRoute: AlertasRoute,
   FavoritosRoute: FavoritosRoute,
   LinhasLineIdRoute: LinhasLineIdRoute,
   LinhasIndexRoute: LinhasIndexRoute,
