@@ -178,7 +178,17 @@ export default function CityMap({
       map.resize();
     });
 
+    // Garante que o mapa acompanhe o tamanho real do contêiner (iframe/preview)
+    const ro = new ResizeObserver(() => map.resize());
+    ro.observe(containerRef.current);
+    const raf = requestAnimationFrame(() => map.resize());
+    const onWinResize = () => map.resize();
+    window.addEventListener("resize", onWinResize);
+
     return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onWinResize);
+      ro.disconnect();
       Object.values(markersRef.current).forEach((m) => m.remove());
       markersRef.current = {};
       readyRef.current = false;
