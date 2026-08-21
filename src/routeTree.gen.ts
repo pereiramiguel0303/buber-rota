@@ -10,33 +10,92 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AlertasRouteImport } from './routes/alertas'
+import { Route as FavoritosRouteImport } from './routes/favoritos'
+import { Route as PerfilRouteImport } from './routes/perfil'
+import { Route as LinhasIndexRouteImport } from './routes/linhas.index'
+import { Route as LinhasLineIdRouteImport } from './routes/linhas.$lineId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlertasRoute = AlertasRouteImport.update({
+  id: '/alertas',
+  path: '/alertas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FavoritosRoute = FavoritosRouteImport.update({
+  id: '/favoritos',
+  path: '/favoritos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilRoute = PerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinhasIndexRoute = LinhasIndexRouteImport.update({
+  id: '/linhas/',
+  path: '/linhas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LinhasLineIdRoute = LinhasLineIdRouteImport.update({
+  id: '/linhas/$lineId',
+  path: '/linhas/$lineId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
+  '/favoritos': typeof FavoritosRoute
+  '/perfil': typeof PerfilRoute
+  '/linhas/$lineId': typeof LinhasLineIdRoute
+  '/linhas/': typeof LinhasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
+  '/favoritos': typeof FavoritosRoute
+  '/perfil': typeof PerfilRoute
+  '/linhas/$lineId': typeof LinhasLineIdRoute
+  '/linhas': typeof LinhasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/alertas': typeof AlertasRoute
+  '/favoritos': typeof FavoritosRoute
+  '/perfil': typeof PerfilRoute
+  '/linhas/$lineId': typeof LinhasLineIdRoute
+  '/linhas/': typeof LinhasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/alertas' | '/favoritos' | '/perfil' | '/linhas/$lineId' | '/linhas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/alertas' | '/favoritos' | '/perfil' | '/linhas/$lineId' | '/linhas'
+  id:
+    | '__root__'
+    | '/'
+    | '/alertas'
+    | '/favoritos'
+    | '/perfil'
+    | '/linhas/$lineId'
+    | '/linhas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AlertasRoute: typeof AlertasRoute
+  FavoritosRoute: typeof FavoritosRoute
+  PerfilRoute: typeof PerfilRoute
+  LinhasLineIdRoute: typeof LinhasLineIdRoute
+  LinhasIndexRoute: typeof LinhasIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +107,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/alertas': {
+      id: '/alertas'
+      path: '/alertas'
+      fullPath: '/alertas'
+      preLoaderRoute: typeof AlertasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/favoritos': {
+      id: '/favoritos'
+      path: '/favoritos'
+      fullPath: '/favoritos'
+      preLoaderRoute: typeof FavoritosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil': {
+      id: '/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof PerfilRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/linhas/': {
+      id: '/linhas/'
+      path: '/linhas'
+      fullPath: '/linhas/'
+      preLoaderRoute: typeof LinhasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/linhas/$lineId': {
+      id: '/linhas/$lineId'
+      path: '/linhas/$lineId'
+      fullPath: '/linhas/$lineId'
+      preLoaderRoute: typeof LinhasLineIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AlertasRoute: AlertasRoute,
+  FavoritosRoute: FavoritosRoute,
+  PerfilRoute: PerfilRoute,
+  LinhasLineIdRoute: LinhasLineIdRoute,
+  LinhasIndexRoute: LinhasIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,15 +1,16 @@
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 import { CITY_CENTER, LINES, LINES_BY_ID, STOPS, lineShape } from "@/lib/transit/network";
+import type { FeatureCollection } from "geojson";
 import type { Bus } from "@/lib/transit/types";
 
 export interface CityMapProps {
   buses: Bus[];
-  selectedLineId?: string;
-  selectedBusId?: string;
-  selectedStopId?: string;
-  userLocation?: { lat: number; lon: number } | null;
+  selectedLineId?: string | undefined;
+  selectedBusId?: string | undefined;
+  selectedStopId?: string | undefined;
+  userLocation?: { lat: number; lon: number } | null | undefined;
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
@@ -32,7 +33,7 @@ const STYLE: maplibregl.StyleSpecification = {
   layers: [{ id: "basemap", type: "raster", source: "basemap" }],
 };
 
-function routesGeoJSON(): GeoJSON.FeatureCollection {
+function routesGeoJSON(): FeatureCollection {
   return {
     type: "FeatureCollection",
     features: LINES.map((line) => ({
@@ -43,7 +44,7 @@ function routesGeoJSON(): GeoJSON.FeatureCollection {
   };
 }
 
-function stopsGeoJSON(): GeoJSON.FeatureCollection {
+function stopsGeoJSON(): FeatureCollection {
   return {
     type: "FeatureCollection",
     features: STOPS.map((s) => ({
@@ -159,7 +160,7 @@ export default function CityMap({
       });
 
       map.on("click", "stops-circle", (e) => {
-        const id = e.features?.[0]?.properties?.id as string | undefined;
+        const id = e.features?.[0]?.properties?.["id"] as string | undefined;
         if (id) handlers.current.onSelectStop(id);
       });
       map.on("mouseenter", "stops-circle", () => {

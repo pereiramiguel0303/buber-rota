@@ -14,16 +14,16 @@ import {
 const CityMap = lazy(() => import("@/components/map/CityMap"));
 
 interface MapSearch {
-  linha?: string;
-  onibus?: string;
-  ponto?: string;
+  linha?: string | undefined;
+  onibus?: string | undefined;
+  ponto?: string | undefined;
 }
 
 export const Route = createFileRoute("/")({
   validateSearch: (search: Record<string, unknown>): MapSearch => ({
-    linha: typeof search.linha === "string" ? search.linha : undefined,
-    onibus: typeof search.onibus === "string" ? search.onibus : undefined,
-    ponto: typeof search.ponto === "string" ? search.ponto : undefined,
+    linha: typeof search["linha"] === "string" ? (search["linha"] as string) : undefined,
+    onibus: typeof search["onibus"] === "string" ? (search["onibus"] as string) : undefined,
+    ponto: typeof search["ponto"] === "string" ? (search["ponto"] as string) : undefined,
   }),
   head: () => ({
     meta: [
