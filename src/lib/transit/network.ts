@@ -1,3 +1,4 @@
+import { ROUTE_SHAPES } from "./shapes.generated";
 import type { AccessibilityFeature, Alert, Line, Stop } from "./types";
 
 /** Centro geográfico de São Leopoldo / RS */
