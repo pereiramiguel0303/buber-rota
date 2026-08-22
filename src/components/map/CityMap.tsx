@@ -81,10 +81,12 @@ function busElement(bus: Bus, selected: boolean) {
   const uid = bus.id.replace(/[^a-zA-Z0-9]/g, "");
 
   const el = document.createElement("button");
+  el.type = "button";
   el.className = "mobisl-bus";
   el.setAttribute("aria-label", `Ônibus ${bus.id}, linha ${bus.lineId}`);
-  el.style.cssText =
-    "all:unset;cursor:pointer;width:44px;height:44px;display:grid;place-items:center;";
+  el.dataset.busId = bus.id;
+  el.dataset.longitude = String(bus.lon);
+  el.dataset.latitude = String(bus.lat);
 
   const inner = document.createElement("div");
   inner.className = "mobisl-bus-inner";
@@ -92,7 +94,7 @@ function busElement(bus: Bus, selected: boolean) {
   inner.style.setProperty("--scale", selected ? "1.3" : "1");
 
   inner.innerHTML = `
-  <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="body-${uid}" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stop-color="${light}"/>
@@ -103,14 +105,20 @@ function busElement(bus: Bus, selected: boolean) {
       </filter>
     </defs>
     <g filter="url(#sh-${uid})">
-      <rect x="14" y="9" width="16" height="26" rx="5.5" fill="url(#body-${uid})"
+      <ellipse cx="24" cy="26" rx="11" ry="16" fill="#0b2b33" opacity=".15"/>
+      <rect x="15" y="7" width="18" height="34" rx="6" fill="url(#body-${uid})"
         stroke="#ffffff" stroke-width="2"/>
-      <path d="M16.6 12.4h10.8a1 1 0 0 1 .96 1.28l-.62 2.1a1 1 0 0 1-.96.72h-9.56a1 1 0 0 1-.96-.72l-.62-2.1a1 1 0 0 1 .96-1.28z"
+      <path d="M18 10.8h12a1.2 1.2 0 0 1 1.14 1.56l-.76 2.4a1.2 1.2 0 0 1-1.14.84H18.76a1.2 1.2 0 0 1-1.14-.84l-.76-2.4A1.2 1.2 0 0 1 18 10.8z"
         fill="#eaf7ff" opacity="0.95"/>
-      <rect x="16.4" y="19" width="11.2" height="8.4" rx="1.6" fill="#ffffff" opacity="0.2"/>
-      <rect x="16.6" y="29.6" width="10.8" height="2.9" rx="1.4" fill="#0b2b33" opacity="0.28"/>
-      <circle cx="17.4" cy="11.4" r="1.05" fill="#fff8d8"/>
-      <circle cx="26.6" cy="11.4" r="1.05" fill="#fff8d8"/>
+      <rect x="17.8" y="18" width="12.4" height="12" rx="2" fill="#ffffff" opacity="0.2"/>
+      <path d="M18 20.5h12M18 24h12M18 27.5h12" stroke="#ffffff" stroke-width=".8" opacity=".34"/>
+      <rect x="18" y="34.4" width="12" height="3.4" rx="1.5" fill="#0b2b33" opacity="0.34"/>
+      <rect x="13.7" y="15" width="2" height="6" rx="1" fill="#163b42"/>
+      <rect x="32.3" y="15" width="2" height="6" rx="1" fill="#163b42"/>
+      <rect x="13.7" y="29" width="2" height="6" rx="1" fill="#163b42"/>
+      <rect x="32.3" y="29" width="2" height="6" rx="1" fill="#163b42"/>
+      <circle cx="19" cy="9.8" r="1.15" fill="#fff8d8"/>
+      <circle cx="29" cy="9.8" r="1.15" fill="#fff8d8"/>
     </g>
   </svg>`;
 
@@ -264,6 +272,8 @@ export default function CityMap({
       if (existing) {
         existing.setLngLat([bus.lon, bus.lat]);
         const el = existing.getElement();
+        el.dataset.longitude = String(bus.lon);
+        el.dataset.latitude = String(bus.lat);
         const inner = el.firstElementChild as HTMLElement | null;
         if (inner) inner.style.setProperty("--rot", `${bus.bearing}deg`);
         applyBusScale(el, selected);
@@ -274,7 +284,14 @@ export default function CityMap({
           ev.stopPropagation();
           handlers.current.onSelectBus(bus.id);
         });
-        markersRef.current[bus.id] = new maplibregl.Marker({ element: el })
+        markersRef.current[bus.id] = new maplibregl.Marker({
+          element: el,
+          anchor: "center",
+          offset: [0, 0],
+          pitchAlignment: "viewport",
+          rotationAlignment: "viewport",
+          subpixelPositioning: true,
+        })
           .setLngLat([bus.lon, bus.lat])
           .addTo(map);
       }
