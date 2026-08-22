@@ -250,12 +250,10 @@ export default function CityMap({
       if (existing) {
         existing.setLngLat([bus.lon, bus.lat]);
         const el = existing.getElement();
-        const arrow = el.firstElementChild as HTMLElement | null;
-        if (arrow) arrow.style.transform = `rotate(${bus.bearing}deg)`;
-        el.style.width = selected ? "40px" : "30px";
-        el.style.height = selected ? "40px" : "30px";
-        el.style.outline = selected ? "3px solid rgba(255,255,255,.9)" : "none";
-        el.style.zIndex = selected ? "5" : "1";
+        const inner = el.firstElementChild as HTMLElement | null;
+        if (inner) inner.style.setProperty("--rot", `${bus.bearing}deg`);
+        applyBusScale(el, selected);
+
       } else {
         const el = busElement(bus, selected);
         el.addEventListener("click", (ev) => {
