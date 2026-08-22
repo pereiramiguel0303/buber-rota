@@ -55,17 +55,56 @@ function stopsGeoJSON(): FeatureCollection {
   };
 }
 
+function shade(hex: string, amount: number) {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) =>
+    Math.max(0, Math.min(255, Math.round(c + 255 * amount))),
+  );
+  return `rgb(${ch[0]},${ch[1]},${ch[2]})`;
+}
+
+function applyBusScale(el: HTMLElement, selected: boolean) {
+  const inner = el.firstElementChild as HTMLElement | null;
+  el.style.zIndex = selected ? "5" : "1";
+  if (inner) inner.style.setProperty("--scale", selected ? "1.35" : "1");
+}
+
+/** Mini modelo 3D de ônibus (visto de cima, em CSS 3D), rotacionado pelo rumo. */
 function busElement(bus: Bus, selected: boolean) {
   const color = LINES_BY_ID[bus.lineId]?.color ?? "#0f9b8e";
+  const top = shade(color, 0.12);
+  const dark = shade(color, -0.22);
+
   const el = document.createElement("button");
   el.className = "mobisl-bus";
   el.setAttribute("aria-label", `Ônibus ${bus.id}, linha ${bus.lineId}`);
-  el.style.cssText = `width:${selected ? 40 : 30}px;height:${selected ? 40 : 30}px;border-radius:12px;
-    background:${color};display:grid;place-items:center;cursor:pointer;border:2px solid rgba(255,255,255,.95);
-    box-shadow:0 4px 12px rgba(15,40,50,.35);color:#fff;font:600 10px/1 ui-sans-serif,system-ui;`;
-  el.innerHTML = `<span style="transform:rotate(${bus.bearing}deg);font-size:${selected ? 16 : 13}px">▲</span>`;
+  el.style.cssText =
+    "all:unset;cursor:pointer;width:46px;height:46px;display:grid;place-items:center;perspective:220px;";
+
+  const inner = document.createElement("div");
+  inner.style.cssText = `--scale:${selected ? 1.35 : 1};--rot:${bus.bearing}deg;
+    width:22px;height:40px;position:relative;transform-style:preserve-3d;
+    transform:rotateX(52deg) rotate(var(--rot)) scale(var(--scale));
+    transition:transform .35s linear;`;
+
+  inner.innerHTML = `
+    <div style="position:absolute;inset:2px -3px -6px 3px;background:rgba(10,30,35,.32);
+      filter:blur(4px);border-radius:12px;transform:translateZ(-6px)"></div>
+    <div style="position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,${top},${dark});
+      border:1.5px solid rgba(255,255,255,.9);box-shadow:0 6px 14px rgba(15,40,50,.35);overflow:hidden">
+      <div style="position:absolute;top:2px;left:2px;right:2px;height:8px;border-radius:5px 5px 3px 3px;
+        background:linear-gradient(180deg,rgba(220,245,255,.95),rgba(150,200,215,.75))"></div>
+      <div style="position:absolute;bottom:2px;left:2px;right:2px;height:5px;border-radius:3px;
+        background:rgba(255,255,255,.35)"></div>
+      <div style="position:absolute;top:12px;left:2px;right:2px;height:1.5px;background:rgba(255,255,255,.55)"></div>
+      <div style="position:absolute;top:16px;left:0;width:2px;height:9px;background:rgba(20,40,45,.5)"></div>
+      <div style="position:absolute;top:16px;right:0;width:2px;height:9px;background:rgba(20,40,45,.5)"></div>
+    </div>`;
+
+  el.appendChild(inner);
   return el;
 }
+
 
 export default function CityMap({
   buses,
