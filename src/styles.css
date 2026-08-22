@@ -156,12 +156,28 @@
 }
 
 /* Marcadores do mapa */
+/* IMPORTANTE: o elemento raiz do marcador é posicionado pelo MapLibre via
+   transform — qualquer transição nele faz o ônibus "escorregar" ao dar zoom
+   ou arrastar. Toda animação fica no elemento interno. */
 .mobisl-bus {
+  transition: none !important;
+  will-change: auto;
+}
+
+.mobisl-bus-inner {
+  display: block;
+  transform: rotate(var(--rot, 0deg)) scale(var(--scale, 1));
+  transform-origin: 50% 50%;
   transition:
-    transform 900ms linear,
+    transform 700ms linear,
     filter 200ms ease;
   will-change: transform;
 }
+
+.mobisl-bus:hover .mobisl-bus-inner {
+  filter: brightness(1.06);
+}
+
 
 .mobisl-pulse::after {
   content: "";

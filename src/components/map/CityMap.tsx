@@ -66,44 +66,58 @@ function shade(hex: string, amount: number) {
 function applyBusScale(el: HTMLElement, selected: boolean) {
   const inner = el.firstElementChild as HTMLElement | null;
   el.style.zIndex = selected ? "5" : "1";
-  if (inner) inner.style.setProperty("--scale", selected ? "1.35" : "1");
+  if (inner) inner.style.setProperty("--scale", selected ? "1.3" : "1");
 }
 
-/** Mini modelo 3D de ônibus (visto de cima, em CSS 3D), rotacionado pelo rumo. */
+/**
+ * Marcador de veículo: ônibus visto de cima, em SVG, com sombra suave e
+ * anel de status. A rotação/escala fica SEMPRE num elemento interno — o
+ * elemento raiz é controlado pelo MapLibre e não pode ter transição.
+ */
 function busElement(bus: Bus, selected: boolean) {
   const color = LINES_BY_ID[bus.lineId]?.color ?? "#0f9b8e";
-  const top = shade(color, 0.12);
-  const dark = shade(color, -0.22);
+  const light = shade(color, 0.18);
+  const dark = shade(color, -0.2);
+  const uid = bus.id.replace(/[^a-zA-Z0-9]/g, "");
 
   const el = document.createElement("button");
   el.className = "mobisl-bus";
   el.setAttribute("aria-label", `Ônibus ${bus.id}, linha ${bus.lineId}`);
   el.style.cssText =
-    "all:unset;cursor:pointer;width:46px;height:46px;display:grid;place-items:center;perspective:220px;";
+    "all:unset;cursor:pointer;width:44px;height:44px;display:grid;place-items:center;";
 
   const inner = document.createElement("div");
-  inner.style.cssText = `--scale:${selected ? 1.35 : 1};--rot:${bus.bearing}deg;
-    width:22px;height:40px;position:relative;transform-style:preserve-3d;
-    transform:rotateX(52deg) rotate(var(--rot)) scale(var(--scale));
-    transition:transform .35s linear;`;
+  inner.className = "mobisl-bus-inner";
+  inner.style.setProperty("--rot", `${bus.bearing}deg`);
+  inner.style.setProperty("--scale", selected ? "1.3" : "1");
 
   inner.innerHTML = `
-    <div style="position:absolute;inset:2px -3px -6px 3px;background:rgba(10,30,35,.32);
-      filter:blur(4px);border-radius:12px;transform:translateZ(-6px)"></div>
-    <div style="position:absolute;inset:0;border-radius:8px;background:linear-gradient(180deg,${top},${dark});
-      border:1.5px solid rgba(255,255,255,.9);box-shadow:0 6px 14px rgba(15,40,50,.35);overflow:hidden">
-      <div style="position:absolute;top:2px;left:2px;right:2px;height:8px;border-radius:5px 5px 3px 3px;
-        background:linear-gradient(180deg,rgba(220,245,255,.95),rgba(150,200,215,.75))"></div>
-      <div style="position:absolute;bottom:2px;left:2px;right:2px;height:5px;border-radius:3px;
-        background:rgba(255,255,255,.35)"></div>
-      <div style="position:absolute;top:12px;left:2px;right:2px;height:1.5px;background:rgba(255,255,255,.55)"></div>
-      <div style="position:absolute;top:16px;left:0;width:2px;height:9px;background:rgba(20,40,45,.5)"></div>
-      <div style="position:absolute;top:16px;right:0;width:2px;height:9px;background:rgba(20,40,45,.5)"></div>
-    </div>`;
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="body-${uid}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="${light}"/>
+        <stop offset="100%" stop-color="${dark}"/>
+      </linearGradient>
+      <filter id="sh-${uid}" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow dx="0" dy="1.6" stdDeviation="1.9" flood-color="#0b2b33" flood-opacity="0.45"/>
+      </filter>
+    </defs>
+    <g filter="url(#sh-${uid})">
+      <rect x="14" y="9" width="16" height="26" rx="5.5" fill="url(#body-${uid})"
+        stroke="#ffffff" stroke-width="2"/>
+      <path d="M16.6 12.4h10.8a1 1 0 0 1 .96 1.28l-.62 2.1a1 1 0 0 1-.96.72h-9.56a1 1 0 0 1-.96-.72l-.62-2.1a1 1 0 0 1 .96-1.28z"
+        fill="#eaf7ff" opacity="0.95"/>
+      <rect x="16.4" y="19" width="11.2" height="8.4" rx="1.6" fill="#ffffff" opacity="0.2"/>
+      <rect x="16.6" y="29.6" width="10.8" height="2.9" rx="1.4" fill="#0b2b33" opacity="0.28"/>
+      <circle cx="17.4" cy="11.4" r="1.05" fill="#fff8d8"/>
+      <circle cx="26.6" cy="11.4" r="1.05" fill="#fff8d8"/>
+    </g>
+  </svg>`;
 
   el.appendChild(inner);
   return el;
 }
+
 
 
 export default function CityMap({
