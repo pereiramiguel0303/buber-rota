@@ -363,9 +363,25 @@ export default function CityMap({
         ["get", "lineId"],
         selectedLineId ?? "__none__",
       ]);
-      map.setPaintProperty("routes-base", "line-opacity", selectedLineId ? 0.15 : 0.45);
-      if (selectedLineId) {
-        const coords = lineShape(LINES_BY_ID[selectedLineId]!);
+      map.setPaintProperty("routes-base", "line-opacity", selectedLineId ? 0.12 : 0.4);
+
+      // Pontos do trajeto em destaque
+      const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
+      const stopFilter: maplibregl.FilterSpecification = line
+        ? ["in", ["get", "id"], ["literal", line.stopIds]]
+        : ["==", ["get", "id"], "__none__"];
+      ["stops-route", "stops-route-label"].forEach((id) => {
+        if (map.getLayer(id)) map.setFilter(id, stopFilter);
+      });
+      if (map.getLayer("stops-route")) {
+        map.setPaintProperty("stops-route", "circle-stroke-color", line?.color ?? "#12161b");
+      }
+      if (map.getLayer("stops-circle")) {
+        map.setPaintProperty("stops-circle", "circle-opacity", line ? 0.45 : 0.95);
+      }
+
+      if (line && !selectedBusId) {
+        const coords = lineShape(line);
         const bounds = coords.reduce(
           (b, c) => b.extend(c as [number, number]),
           new maplibregl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number]),
@@ -375,6 +391,7 @@ export default function CityMap({
     };
     if (map.isStyleLoaded()) apply();
     else map.once("idle", apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLineId]);
 
   // Voo até ônibus selecionado
