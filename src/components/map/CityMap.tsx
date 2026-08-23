@@ -52,7 +52,14 @@ function stopsGeoJSON(): FeatureCollection {
     type: "FeatureCollection",
     features: STOPS.map((s) => ({
       type: "Feature",
-      properties: { id: s.id, name: s.name, lines: s.id },
+      properties: {
+        id: s.id,
+        name: s.name,
+        neighborhood: s.neighborhood,
+        lines: LINES.filter((l) => l.stopIds.includes(s.id))
+          .map((l) => l.id)
+          .join(","),
+      },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] },
     })),
   };
