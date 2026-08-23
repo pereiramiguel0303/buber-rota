@@ -264,18 +264,21 @@ export default function CityMap({
         },
       });
 
-      map.on("click", "stops-circle", (e) => {
-        const id = e.features?.[0]?.properties?.["id"] as string | undefined;
-        if (id) handlers.current.onSelectStop(id);
-      });
-      map.on("mouseenter", "stops-circle", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "stops-circle", () => {
-        map.getCanvas().style.cursor = "";
+      const stopLayers = ["stops-route", "stops-circle"];
+      stopLayers.forEach((layer) => {
+        map.on("click", layer, (e) => {
+          const id = e.features?.[0]?.properties?.["id"] as string | undefined;
+          if (id) handlers.current.onSelectStop(id);
+        });
+        map.on("mouseenter", layer, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", layer, () => {
+          map.getCanvas().style.cursor = "";
+        });
       });
       map.on("click", (e) => {
-        const hits = map.queryRenderedFeatures(e.point, { layers: ["stops-circle"] });
+        const hits = map.queryRenderedFeatures(e.point, { layers: stopLayers });
         if (hits.length === 0) handlers.current.onBackgroundClick();
       });
 
