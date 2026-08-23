@@ -18,19 +18,22 @@ export interface CityMapProps {
 
 const STYLE: maplibregl.StyleSpecification = {
   version: 8,
+  glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
   sources: {
     basemap: {
       type: "raster",
       tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
+        "https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
+        "https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
       ],
       tileSize: 256,
       attribution: "© OpenStreetMap © CARTO",
     },
   },
-  layers: [{ id: "basemap", type: "raster", source: "basemap" }],
+  layers: [
+    { id: "basemap", type: "raster", source: "basemap", paint: { "raster-brightness-min": 0.02 } },
+  ],
 };
 
 function routesGeoJSON(): FeatureCollection {
@@ -49,7 +52,14 @@ function stopsGeoJSON(): FeatureCollection {
     type: "FeatureCollection",
     features: STOPS.map((s) => ({
       type: "Feature",
-      properties: { id: s.id, name: s.name, lines: s.id },
+      properties: {
+        id: s.id,
+        name: s.name,
+        neighborhood: s.neighborhood,
+        lines: LINES.filter((l) => l.stopIds.includes(s.id))
+          .map((l) => l.id)
+          .join(","),
+      },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] },
     })),
   };
@@ -160,6 +170,7 @@ export default function CityMap({
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    (window as unknown as Record<string, unknown>)["__mobislMap"] = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
     map.on("load", () => {
@@ -189,16 +200,30 @@ export default function CityMap({
       });
 
       map.addSource("stops", { type: "geojson", data: stopsGeoJSON() });
+      // Todos os pontos da rede — sempre visíveis, discretos no tema escuro
       map.addLayer({
         id: "stops-circle",
         type: "circle",
         source: "stops",
-        minzoom: 12,
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 3.5, 16, 7],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.6, 13, 4.2, 17, 7.5],
+          "circle-color": "#0b0d10",
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.4, 16, 3],
+          "circle-stroke-color": "#8f9aa6",
+          "circle-opacity": 0.95,
+        },
+      });
+      // Pontos do trajeto selecionado — destacados
+      map.addLayer({
+        id: "stops-route",
+        type: "circle",
+        source: "stops",
+        filter: ["==", ["get", "id"], "__none__"],
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 13, 6, 17, 10],
           "circle-color": "#ffffff",
-          "circle-stroke-width": 2.5,
-          "circle-stroke-color": "#0f6b70",
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#12161b",
         },
       });
       map.addLayer({
@@ -211,27 +236,50 @@ export default function CityMap({
           "text-size": 11,
           "text-offset": [0, 1.1],
           "text-anchor": "top",
-          "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+          "text-font": ["Open Sans Regular"],
         },
         paint: {
-          "text-color": "#134e52",
-          "text-halo-color": "#ffffff",
+          "text-color": "#d7dee6",
+          "text-halo-color": "#05070a",
           "text-halo-width": 1.6,
         },
       });
+      map.addLayer({
+        id: "stops-route-label",
+        type: "symbol",
+        source: "stops",
+        minzoom: 12.4,
+        filter: ["==", ["get", "id"], "__none__"],
+        layout: {
+          "text-field": ["get", "name"],
+          "text-size": 12,
+          "text-offset": [0, 1.2],
+          "text-anchor": "top",
+          "text-font": ["Open Sans Semibold"],
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#05070a",
+          "text-halo-width": 2,
+        },
+      });
 
-      map.on("click", "stops-circle", (e) => {
-        const id = e.features?.[0]?.properties?.["id"] as string | undefined;
-        if (id) handlers.current.onSelectStop(id);
-      });
-      map.on("mouseenter", "stops-circle", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "stops-circle", () => {
-        map.getCanvas().style.cursor = "";
+      const stopLayers = ["stops-route", "stops-circle"];
+      stopLayers.forEach((layer) => {
+        map.on("click", layer, (e) => {
+          const id = e.features?.[0]?.properties?.["id"] as string | undefined;
+          if (id) handlers.current.onSelectStop(id);
+        });
+        map.on("mouseenter", layer, () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+        map.on("mouseleave", layer, () => {
+          map.getCanvas().style.cursor = "";
+        });
       });
       map.on("click", (e) => {
-        const hits = map.queryRenderedFeatures(e.point, { layers: ["stops-circle"] });
+        const hits = map.queryRenderedFeatures(e.point, { layers: stopLayers });
         if (hits.length === 0) handlers.current.onBackgroundClick();
       });
 
@@ -316,9 +364,25 @@ export default function CityMap({
         ["get", "lineId"],
         selectedLineId ?? "__none__",
       ]);
-      map.setPaintProperty("routes-base", "line-opacity", selectedLineId ? 0.15 : 0.45);
-      if (selectedLineId) {
-        const coords = lineShape(LINES_BY_ID[selectedLineId]!);
+      map.setPaintProperty("routes-base", "line-opacity", selectedLineId ? 0.12 : 0.4);
+
+      // Pontos do trajeto em destaque
+      const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
+      const stopFilter: maplibregl.FilterSpecification = line
+        ? ["in", ["get", "id"], ["literal", line.stopIds]]
+        : ["==", ["get", "id"], "__none__"];
+      ["stops-route", "stops-route-label"].forEach((id) => {
+        if (map.getLayer(id)) map.setFilter(id, stopFilter);
+      });
+      if (map.getLayer("stops-route")) {
+        map.setPaintProperty("stops-route", "circle-stroke-color", line?.color ?? "#12161b");
+      }
+      if (map.getLayer("stops-circle")) {
+        map.setPaintProperty("stops-circle", "circle-opacity", line ? 0.45 : 0.95);
+      }
+
+      if (line && !selectedBusId) {
+        const coords = lineShape(line);
         const bounds = coords.reduce(
           (b, c) => b.extend(c as [number, number]),
           new maplibregl.LngLatBounds(coords[0] as [number, number], coords[0] as [number, number]),
@@ -328,6 +392,7 @@ export default function CityMap({
     };
     if (map.isStyleLoaded()) apply();
     else map.once("idle", apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLineId]);
 
   // Voo até ônibus selecionado
