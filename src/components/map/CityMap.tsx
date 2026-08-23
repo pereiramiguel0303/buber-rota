@@ -170,6 +170,7 @@ export default function CityMap({
       attributionControl: { compact: true },
     });
     mapRef.current = map;
+    (window as unknown as Record<string, unknown>)["__mobislMap"] = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
     map.on("load", () => {
