@@ -199,16 +199,30 @@ export default function CityMap({
       });
 
       map.addSource("stops", { type: "geojson", data: stopsGeoJSON() });
+      // Todos os pontos da rede — sempre visíveis, discretos no tema escuro
       map.addLayer({
         id: "stops-circle",
         type: "circle",
         source: "stops",
-        minzoom: 12,
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 3.5, 16, 7],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.6, 13, 4.2, 17, 7.5],
+          "circle-color": "#0b0d10",
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.4, 16, 3],
+          "circle-stroke-color": "#8f9aa6",
+          "circle-opacity": 0.95,
+        },
+      });
+      // Pontos do trajeto selecionado — destacados
+      map.addLayer({
+        id: "stops-route",
+        type: "circle",
+        source: "stops",
+        filter: ["==", ["get", "id"], "__none__"],
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 13, 6, 17, 10],
           "circle-color": "#ffffff",
-          "circle-stroke-width": 2.5,
-          "circle-stroke-color": "#0f6b70",
+          "circle-stroke-width": 3,
+          "circle-stroke-color": "#12161b",
         },
       });
       map.addLayer({
@@ -221,12 +235,32 @@ export default function CityMap({
           "text-size": 11,
           "text-offset": [0, 1.1],
           "text-anchor": "top",
-          "text-font": ["Open Sans Regular", "Arial Unicode MS Regular"],
+          "text-font": ["Open Sans Regular"],
         },
         paint: {
-          "text-color": "#134e52",
-          "text-halo-color": "#ffffff",
+          "text-color": "#d7dee6",
+          "text-halo-color": "#05070a",
           "text-halo-width": 1.6,
+        },
+      });
+      map.addLayer({
+        id: "stops-route-label",
+        type: "symbol",
+        source: "stops",
+        minzoom: 12.4,
+        filter: ["==", ["get", "id"], "__none__"],
+        layout: {
+          "text-field": ["get", "name"],
+          "text-size": 12,
+          "text-offset": [0, 1.2],
+          "text-anchor": "top",
+          "text-font": ["Open Sans Semibold"],
+          "text-allow-overlap": false,
+        },
+        paint: {
+          "text-color": "#ffffff",
+          "text-halo-color": "#05070a",
+          "text-halo-width": 2,
         },
       });
 
