@@ -84,9 +84,9 @@ function busElement(bus: Bus, selected: boolean) {
   el.type = "button";
   el.className = "mobisl-bus";
   el.setAttribute("aria-label", `Ônibus ${bus.id}, linha ${bus.lineId}`);
-  el.dataset.busId = bus.id;
-  el.dataset.longitude = String(bus.lon);
-  el.dataset.latitude = String(bus.lat);
+  el.dataset['busId'] = bus.id;
+  el.dataset['longitude'] = String(bus.lon);
+  el.dataset['latitude'] = String(bus.lat);
 
   const inner = document.createElement("div");
   inner.className = "mobisl-bus-inner";
@@ -272,8 +272,8 @@ export default function CityMap({
       if (existing) {
         existing.setLngLat([bus.lon, bus.lat]);
         const el = existing.getElement();
-        el.dataset.longitude = String(bus.lon);
-        el.dataset.latitude = String(bus.lat);
+        el.dataset['longitude'] = String(bus.lon);
+        el.dataset['latitude'] = String(bus.lat);
         const inner = el.firstElementChild as HTMLElement | null;
         if (inner) inner.style.setProperty("--rot", `${bus.bearing}deg`);
         applyBusScale(el, selected);
