@@ -60,10 +60,81 @@ function stopsGeoJSON(): FeatureCollection {
         lines: LINES.filter((l) => l.stopIds.includes(s.id))
           .map((l) => l.id)
           .join(","),
+        seq: "",
       },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] },
     })),
   };
+}
+
+/** Pontos da linha selecionada, com o número de ordem no itinerário. */
+function lineStopsGeoJSON(lineId?: string): FeatureCollection {
+  const line = lineId ? LINES_BY_ID[lineId] : undefined;
+  if (!line) return { type: "FeatureCollection", features: [] };
+  return {
+    type: "FeatureCollection",
+    features: line.stopIds.flatMap((id, i) => {
+      const s = STOPS.find((x) => x.id === id);
+      if (!s) return [];
+      return [
+        {
+          type: "Feature" as const,
+          properties: {
+            id: s.id,
+            name: s.name,
+            seq: String(i + 1),
+            terminal: i === 0 ? "origem" : i === line.stopIds.length - 1 ? "destino" : "",
+            color: line.color,
+          },
+          geometry: { type: "Point" as const, coordinates: [s.lon, s.lat] },
+        },
+      ];
+    }),
+  };
+}
+
+/** Marcadores de origem e destino da linha selecionada. */
+function endpointsGeoJSON(lineId?: string): FeatureCollection {
+  const line = lineId ? LINES_BY_ID[lineId] : undefined;
+  if (!line) return { type: "FeatureCollection", features: [] };
+  const first = STOPS.find((s) => s.id === line.stopIds[0]);
+  const last = STOPS.find((s) => s.id === line.stopIds[line.stopIds.length - 1]);
+  const feats = [] as FeatureCollection["features"];
+  if (first)
+    feats.push({
+      type: "Feature",
+      properties: { label: `Origem · ${line.origin}`, color: line.color },
+      geometry: { type: "Point", coordinates: [first.lon, first.lat] },
+    });
+  if (last)
+    feats.push({
+      type: "Feature",
+      properties: { label: `Destino · ${line.destination}`, color: line.color },
+      geometry: { type: "Point", coordinates: [last.lon, last.lat] },
+    });
+  return { type: "FeatureCollection", features: feats };
+}
+
+/** Seta usada para indicar o sentido do trajeto (ícone gerado em canvas). */
+function arrowImage(): ImageData {
+  const size = 32;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext("2d")!;
+  ctx.translate(size / 2, size / 2);
+  ctx.beginPath();
+  ctx.moveTo(9, 0);
+  ctx.lineTo(-6, -7.5);
+  ctx.lineTo(-3.5, 0);
+  ctx.lineTo(-6, 7.5);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = "rgba(15,23,42,.55)";
+  ctx.lineWidth = 1.6;
+  ctx.fill();
+  ctx.stroke();
+  return ctx.getImageData(0, 0, size, size);
 }
 
 function shade(hex: string, amount: number) {
@@ -212,6 +283,28 @@ export default function CityMap({
         },
       });
 
+      // Setas de sentido sobre a rota selecionada
+      try {
+        if (!map.hasImage("mobisl-arrow")) map.addImage("mobisl-arrow", arrowImage());
+      } catch {
+        /* canvas indisponível: segue sem setas */
+      }
+      map.addLayer({
+        id: "routes-direction",
+        type: "symbol",
+        source: "routes",
+        filter: ["==", ["get", "lineId"], "__none__"],
+        layout: {
+          "symbol-placement": "line",
+          "symbol-spacing": 90,
+          "icon-image": "mobisl-arrow",
+          "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.42, 16, 0.7],
+          "icon-rotation-alignment": "map",
+          "icon-allow-overlap": true,
+          "icon-ignore-placement": true,
+        },
+      });
+
       map.addSource("stops", { type: "geojson", data: stopsGeoJSON() });
       // Todos os pontos da rede — sutis sobre o mapa claro
       map.addLayer({
@@ -226,18 +319,12 @@ export default function CityMap({
           "circle-opacity": 0.95,
         },
       });
-      // Pontos do trajeto selecionado — destacados
+      // Área de toque generosa (invisível) para os pontos
       map.addLayer({
-        id: "stops-route",
+        id: "stops-hit",
         type: "circle",
         source: "stops",
-        filter: ["==", ["get", "id"], "__none__"],
-        paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 13, 6, 17, 10],
-          "circle-color": "#ffffff",
-          "circle-stroke-width": 3,
-          "circle-stroke-color": "#0f172a",
-        },
+        paint: { "circle-radius": 14, "circle-color": "#000000", "circle-opacity": 0 },
       });
       map.addLayer({
         id: "stops-label",
@@ -257,19 +344,44 @@ export default function CityMap({
           "text-halo-width": 1.8,
         },
       });
+
+      // Pontos da linha selecionada — numerados na ordem do itinerário
+      map.addSource("line-stops", { type: "geojson", data: lineStopsGeoJSON() });
+      map.addLayer({
+        id: "stops-route",
+        type: "circle",
+        source: "line-stops",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 13, 8, 17, 12],
+          "circle-color": "#ffffff",
+          "circle-stroke-width": 3,
+          "circle-stroke-color": ["get", "color"],
+        },
+      });
+      map.addLayer({
+        id: "stops-route-seq",
+        type: "symbol",
+        source: "line-stops",
+        minzoom: 12.4,
+        layout: {
+          "text-field": ["get", "seq"],
+          "text-size": 10.5,
+          "text-font": ["Noto Sans Bold"],
+          "text-allow-overlap": true,
+        },
+        paint: { "text-color": "#0f172a" },
+      });
       map.addLayer({
         id: "stops-route-label",
         type: "symbol",
-        source: "stops",
+        source: "line-stops",
         minzoom: 12.2,
-        filter: ["==", ["get", "id"], "__none__"],
         layout: {
           "text-field": ["get", "name"],
-          "text-size": 12.5,
-          "text-offset": [0, 1.2],
+          "text-size": 12,
+          "text-offset": [0, 1.3],
           "text-anchor": "top",
           "text-font": ["Noto Sans Bold"],
-          "text-allow-overlap": false,
         },
         paint: {
           "text-color": "#0f172a",
@@ -278,8 +390,43 @@ export default function CityMap({
         },
       });
 
+      // Origem e destino da linha selecionada
+      map.addSource("endpoints", { type: "geojson", data: endpointsGeoJSON() });
+      map.addLayer({
+        id: "endpoints-label",
+        type: "symbol",
+        source: "endpoints",
+        layout: {
+          "text-field": ["get", "label"],
+          "text-size": 12,
+          "text-offset": [0, -1.8],
+          "text-anchor": "bottom",
+          "text-font": ["Noto Sans Bold"],
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": ["get", "color"],
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 2.4,
+        },
+      });
 
-      const stopLayers = ["stops-route", "stops-circle"];
+      // Ponto selecionado — anel de destaque
+      map.addLayer({
+        id: "stop-selected",
+        type: "circle",
+        source: "stops",
+        filter: ["==", ["get", "id"], "__none__"],
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 9, 17, 16],
+          "circle-color": "#0f9b8e",
+          "circle-opacity": 0.18,
+          "circle-stroke-width": 2.5,
+          "circle-stroke-color": "#0f9b8e",
+        },
+      });
+
+      const stopLayers = ["stops-hit", "stops-route", "stops-circle"];
       stopLayers.forEach((layer) => {
         map.on("click", layer, (e) => {
           const id = e.features?.[0]?.properties?.["id"] as string | undefined;
