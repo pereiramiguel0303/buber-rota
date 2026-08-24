@@ -18,23 +18,24 @@ export interface CityMapProps {
 
 const STYLE: maplibregl.StyleSpecification = {
   version: 8,
-  glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   sources: {
     basemap: {
       type: "raster",
       tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}@2x.png",
+        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
       ],
       tileSize: 256,
       attribution: "© OpenStreetMap © CARTO",
     },
   },
   layers: [
-    { id: "basemap", type: "raster", source: "basemap", paint: { "raster-brightness-min": 0.02 } },
+    { id: "basemap", type: "raster", source: "basemap" },
   ],
 };
+
 
 function routesGeoJSON(): FeatureCollection {
   return {
@@ -104,33 +105,45 @@ function busElement(bus: Bus, selected: boolean) {
   inner.style.setProperty("--scale", selected ? "1.3" : "1");
 
   inner.innerHTML = `
-  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="body-${uid}" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="body-${uid}" x1="0.1" y1="0" x2="0.95" y2="1">
         <stop offset="0%" stop-color="${light}"/>
+        <stop offset="46%" stop-color="${color}"/>
         <stop offset="100%" stop-color="${dark}"/>
       </linearGradient>
-      <filter id="sh-${uid}" x="-50%" y="-50%" width="200%" height="200%">
-        <feDropShadow dx="0" dy="1.6" stdDeviation="1.9" flood-color="#0b2b33" flood-opacity="0.45"/>
+      <linearGradient id="gloss-${uid}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+        <stop offset="35%" stop-color="#ffffff" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.18"/>
+      </linearGradient>
+      <linearGradient id="glass-${uid}" x1="0" y1="0" x2="0.6" y2="1">
+        <stop offset="0%" stop-color="#dff2ff"/>
+        <stop offset="100%" stop-color="#7fa6bd"/>
+      </linearGradient>
+      <filter id="sh-${uid}" x="-60%" y="-60%" width="220%" height="220%">
+        <feDropShadow dx="0" dy="2" stdDeviation="2.1" flood-color="#0b1220" flood-opacity="0.42"/>
       </filter>
     </defs>
+    <ellipse cx="26" cy="29" rx="10.5" ry="16" fill="#0b1220" opacity=".16"/>
     <g filter="url(#sh-${uid})">
-      <ellipse cx="24" cy="26" rx="11" ry="16" fill="#0b2b33" opacity=".15"/>
-      <rect x="15" y="7" width="18" height="34" rx="6" fill="url(#body-${uid})"
-        stroke="#ffffff" stroke-width="2"/>
-      <path d="M18 10.8h12a1.2 1.2 0 0 1 1.14 1.56l-.76 2.4a1.2 1.2 0 0 1-1.14.84H18.76a1.2 1.2 0 0 1-1.14-.84l-.76-2.4A1.2 1.2 0 0 1 18 10.8z"
-        fill="#eaf7ff" opacity="0.95"/>
-      <rect x="17.8" y="18" width="12.4" height="12" rx="2" fill="#ffffff" opacity="0.2"/>
-      <path d="M18 20.5h12M18 24h12M18 27.5h12" stroke="#ffffff" stroke-width=".8" opacity=".34"/>
-      <rect x="18" y="34.4" width="12" height="3.4" rx="1.5" fill="#0b2b33" opacity="0.34"/>
-      <rect x="13.7" y="15" width="2" height="6" rx="1" fill="#163b42"/>
-      <rect x="32.3" y="15" width="2" height="6" rx="1" fill="#163b42"/>
-      <rect x="13.7" y="29" width="2" height="6" rx="1" fill="#163b42"/>
-      <rect x="32.3" y="29" width="2" height="6" rx="1" fill="#163b42"/>
-      <circle cx="19" cy="9.8" r="1.15" fill="#fff8d8"/>
-      <circle cx="29" cy="9.8" r="1.15" fill="#fff8d8"/>
+      <rect x="15.5" y="20" width="21" height="5" rx="2" fill="#1a2230" opacity=".85"/>
+      <rect x="15.5" y="30" width="21" height="5" rx="2" fill="#1a2230" opacity=".85"/>
+      <rect x="16" y="7" width="20" height="38" rx="7" fill="url(#body-${uid})" stroke="#ffffff" stroke-width="1.8"/>
+      <rect x="16" y="7" width="20" height="38" rx="7" fill="url(#gloss-${uid})"/>
+      <path d="M19.4 10.4h13.2c1.1 0 1.9 1 1.6 2.05l-.9 3.1c-.2.72-.86 1.2-1.6 1.2H20.3c-.75 0-1.4-.48-1.6-1.2l-.9-3.1c-.3-1.05.5-2.05 1.6-2.05z" fill="url(#glass-${uid})"/>
+      <path d="M19.9 41.6h12.2c.9 0 1.6-.75 1.5-1.6l-.3-2.2c-.1-.72-.72-1.25-1.45-1.25H20.15c-.73 0-1.35.53-1.45 1.25l-.3 2.2c-.1.85.6 1.6 1.5 1.6z" fill="#8fb4c9" opacity=".85"/>
+      <rect x="17.9" y="19.4" width="1.9" height="12.6" rx=".95" fill="#0f172a" opacity=".42"/>
+      <rect x="32.2" y="19.4" width="1.9" height="12.6" rx=".95" fill="#0f172a" opacity=".42"/>
+      <rect x="20.4" y="19.2" width="11.2" height="13.2" rx="2.4" fill="#ffffff" opacity=".16"/>
+      <path d="M26 19.2v13.2" stroke="#ffffff" stroke-width=".7" opacity=".28"/>
+      <circle cx="20.6" cy="9.4" r="1.25" fill="#fffbe0"/>
+      <circle cx="31.4" cy="9.4" r="1.25" fill="#fffbe0"/>
+      <rect x="19.8" y="43.1" width="2.6" height="1.5" rx=".7" fill="#ff5a4d"/>
+      <rect x="29.6" y="43.1" width="2.6" height="1.5" rx=".7" fill="#ff5a4d"/>
     </g>
   </svg>`;
+
 
   el.appendChild(inner);
   return el;
@@ -200,16 +213,16 @@ export default function CityMap({
       });
 
       map.addSource("stops", { type: "geojson", data: stopsGeoJSON() });
-      // Todos os pontos da rede — sempre visíveis, discretos no tema escuro
+      // Todos os pontos da rede — sutis sobre o mapa claro
       map.addLayer({
         id: "stops-circle",
         type: "circle",
         source: "stops",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.6, 13, 4.2, 17, 7.5],
-          "circle-color": "#0b0d10",
-          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.4, 16, 3],
-          "circle-stroke-color": "#8f9aa6",
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.2, 13, 3.6, 17, 6.5],
+          "circle-color": "#ffffff",
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 16, 2.4],
+          "circle-stroke-color": "#334155",
           "circle-opacity": 0.95,
         },
       });
@@ -223,47 +236,48 @@ export default function CityMap({
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 13, 6, 17, 10],
           "circle-color": "#ffffff",
           "circle-stroke-width": 3,
-          "circle-stroke-color": "#12161b",
+          "circle-stroke-color": "#0f172a",
         },
       });
       map.addLayer({
         id: "stops-label",
         type: "symbol",
         source: "stops",
-        minzoom: 14.2,
+        minzoom: 13.6,
         layout: {
           "text-field": ["get", "name"],
           "text-size": 11,
           "text-offset": [0, 1.1],
           "text-anchor": "top",
-          "text-font": ["Open Sans Regular"],
+          "text-font": ["Noto Sans Regular"],
         },
         paint: {
-          "text-color": "#d7dee6",
-          "text-halo-color": "#05070a",
-          "text-halo-width": 1.6,
+          "text-color": "#334155",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 1.8,
         },
       });
       map.addLayer({
         id: "stops-route-label",
         type: "symbol",
         source: "stops",
-        minzoom: 12.4,
+        minzoom: 12.2,
         filter: ["==", ["get", "id"], "__none__"],
         layout: {
           "text-field": ["get", "name"],
-          "text-size": 12,
+          "text-size": 12.5,
           "text-offset": [0, 1.2],
           "text-anchor": "top",
-          "text-font": ["Open Sans Semibold"],
+          "text-font": ["Noto Sans Bold"],
           "text-allow-overlap": false,
         },
         paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "#05070a",
-          "text-halo-width": 2,
+          "text-color": "#0f172a",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 2.2,
         },
       });
+
 
       const stopLayers = ["stops-route", "stops-circle"];
       stopLayers.forEach((layer) => {
