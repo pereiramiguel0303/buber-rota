@@ -60,10 +60,81 @@ function stopsGeoJSON(): FeatureCollection {
         lines: LINES.filter((l) => l.stopIds.includes(s.id))
           .map((l) => l.id)
           .join(","),
+        seq: "",
       },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] },
     })),
   };
+}
+
+/** Pontos da linha selecionada, com o número de ordem no itinerário. */
+function lineStopsGeoJSON(lineId?: string): FeatureCollection {
+  const line = lineId ? LINES_BY_ID[lineId] : undefined;
+  if (!line) return { type: "FeatureCollection", features: [] };
+  return {
+    type: "FeatureCollection",
+    features: line.stopIds.flatMap((id, i) => {
+      const s = STOPS.find((x) => x.id === id);
+      if (!s) return [];
+      return [
+        {
+          type: "Feature" as const,
+          properties: {
+            id: s.id,
+            name: s.name,
+            seq: String(i + 1),
+            terminal: i === 0 ? "origem" : i === line.stopIds.length - 1 ? "destino" : "",
+            color: line.color,
+          },
+          geometry: { type: "Point" as const, coordinates: [s.lon, s.lat] },
+        },
+      ];
+    }),
+  };
+}
+
+/** Marcadores de origem e destino da linha selecionada. */
+function endpointsGeoJSON(lineId?: string): FeatureCollection {
+  const line = lineId ? LINES_BY_ID[lineId] : undefined;
+  if (!line) return { type: "FeatureCollection", features: [] };
+  const first = STOPS.find((s) => s.id === line.stopIds[0]);
+  const last = STOPS.find((s) => s.id === line.stopIds[line.stopIds.length - 1]);
+  const feats = [] as FeatureCollection["features"];
+  if (first)
+    feats.push({
+      type: "Feature",
+      properties: { label: `Origem · ${line.origin}`, color: line.color },
+      geometry: { type: "Point", coordinates: [first.lon, first.lat] },
+    });
+  if (last)
+    feats.push({
+      type: "Feature",
+      properties: { label: `Destino · ${line.destination}`, color: line.color },
+      geometry: { type: "Point", coordinates: [last.lon, last.lat] },
+    });
+  return { type: "FeatureCollection", features: feats };
+}
+
+/** Seta usada para indicar o sentido do trajeto (ícone gerado em canvas). */
+function arrowImage(): ImageData {
+  const size = 32;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext("2d")!;
+  ctx.translate(size / 2, size / 2);
+  ctx.beginPath();
+  ctx.moveTo(9, 0);
+  ctx.lineTo(-6, -7.5);
+  ctx.lineTo(-3.5, 0);
+  ctx.lineTo(-6, 7.5);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = "rgba(15,23,42,.55)";
+  ctx.lineWidth = 1.6;
+  ctx.fill();
+  ctx.stroke();
+  return ctx.getImageData(0, 0, size, size);
 }
 
 function shade(hex: string, amount: number) {
