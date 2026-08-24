@@ -201,16 +201,16 @@ export default function CityMap({
       });
 
       map.addSource("stops", { type: "geojson", data: stopsGeoJSON() });
-      // Todos os pontos da rede — sempre visíveis, discretos no tema escuro
+      // Todos os pontos da rede — sutis sobre o mapa claro
       map.addLayer({
         id: "stops-circle",
         type: "circle",
         source: "stops",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.6, 13, 4.2, 17, 7.5],
-          "circle-color": "#0b0d10",
-          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.4, 16, 3],
-          "circle-stroke-color": "#8f9aa6",
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.2, 13, 3.6, 17, 6.5],
+          "circle-color": "#ffffff",
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 16, 2.4],
+          "circle-stroke-color": "#334155",
           "circle-opacity": 0.95,
         },
       });
@@ -224,47 +224,48 @@ export default function CityMap({
           "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 13, 6, 17, 10],
           "circle-color": "#ffffff",
           "circle-stroke-width": 3,
-          "circle-stroke-color": "#12161b",
+          "circle-stroke-color": "#0f172a",
         },
       });
       map.addLayer({
         id: "stops-label",
         type: "symbol",
         source: "stops",
-        minzoom: 14.2,
+        minzoom: 13.6,
         layout: {
           "text-field": ["get", "name"],
           "text-size": 11,
           "text-offset": [0, 1.1],
           "text-anchor": "top",
-          "text-font": ["Open Sans Regular"],
+          "text-font": ["Noto Sans Regular"],
         },
         paint: {
-          "text-color": "#d7dee6",
-          "text-halo-color": "#05070a",
-          "text-halo-width": 1.6,
+          "text-color": "#334155",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 1.8,
         },
       });
       map.addLayer({
         id: "stops-route-label",
         type: "symbol",
         source: "stops",
-        minzoom: 12.4,
+        minzoom: 12.2,
         filter: ["==", ["get", "id"], "__none__"],
         layout: {
           "text-field": ["get", "name"],
-          "text-size": 12,
+          "text-size": 12.5,
           "text-offset": [0, 1.2],
           "text-anchor": "top",
-          "text-font": ["Open Sans Semibold"],
+          "text-font": ["Noto Sans Bold"],
           "text-allow-overlap": false,
         },
         paint: {
-          "text-color": "#ffffff",
-          "text-halo-color": "#05070a",
-          "text-halo-width": 2,
+          "text-color": "#0f172a",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 2.2,
         },
       });
+
 
       const stopLayers = ["stops-route", "stops-circle"];
       stopLayers.forEach((layer) => {
