@@ -9,12 +9,6 @@ export type AccessibilityFeature =
 
 export type BusStatus = "operating" | "delayed" | "stopped" | "out_of_service";
 
-/** Viações que operam o transporte público de São Leopoldo. */
-export type Operator = "Feitoria" | "Sinoscap" | "Leopoldense";
-
-/** Sentido operacional conforme os quadros de horários oficiais. */
-export type Direction = "bairro-centro" | "centro-bairro";
-
 export interface Stop {
   id: string;
   name: string;
@@ -26,17 +20,10 @@ export interface Stop {
 
 export interface Line {
   id: string;
-  /** Sigla curta usada nos selos da interface. */
-  code: string;
-  /** Nome oficial da linha (quadro de horários). */
   name: string;
-  operator: Operator;
-  /** Extremidade "bairro" do itinerário. */
   origin: string;
-  /** Extremidade "centro" do itinerário. */
   destination: string;
   color: string;
-  /** Itinerário no sentido Bairro → Centro. */
   stopIds: string[];
   headwayMin: number;
 }
@@ -45,7 +32,6 @@ export interface Bus {
   id: string;
   lineId: string;
   destination: string;
-  direction: Direction;
   lat: number;
   lon: number;
   bearing: number;
