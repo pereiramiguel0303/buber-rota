@@ -16,8 +16,33 @@ export interface CityMapProps {
   onBackgroundClick: () => void;
 }
 
-/** Estilo vetorial gratuito (OpenFreeMap) — claro, sem necessidade de chave de API. */
-const STYLE = "https://tiles.openfreemap.org/styles/bright";
+/**
+ * Estilo base próprio (raster, sem chave de API e sem depender de um style JSON externo).
+ * Usa tiles claros da Carto (CDN pública) e glifos do OpenFreeMap para os rótulos.
+ */
+const STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  sources: {
+    basemap: {
+      type: "raster",
+      tiles: [
+        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+        "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
+      ],
+      tileSize: 256,
+      maxzoom: 20,
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    },
+  },
+  layers: [
+    { id: "basemap", type: "raster", source: "basemap", paint: { "raster-opacity": 1 } },
+  ],
+};
+
 
 
 
