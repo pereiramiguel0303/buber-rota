@@ -12,4 +12,9 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // maplibre-gl carrega seu worker como asset relativo; pré-bundlar quebra o worker em dev.
+    optimizeDeps: { exclude: ["maplibre-gl"] },
+  },
 });
+
