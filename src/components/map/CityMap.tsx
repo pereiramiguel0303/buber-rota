@@ -554,11 +554,20 @@ export default function CityMap({
   // Voo até ponto selecionado
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedStopId) return;
+    if (!map) return;
+    const apply = () => {
+      if (map.getLayer("stop-selected")) {
+        map.setFilter("stop-selected", ["==", ["get", "id"], selectedStopId ?? "__none__"]);
+      }
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once("idle", apply);
+    if (!selectedStopId) return;
     const stop = STOPS.find((s) => s.id === selectedStopId);
     if (!stop) return;
     map.easeTo({ center: [stop.lon, stop.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 });
   }, [selectedStopId]);
+
 
   // Localização do usuário
   useEffect(() => {
