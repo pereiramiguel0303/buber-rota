@@ -296,7 +296,7 @@ export default function CityMap({
         type: "circle",
         source: "stops",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.2, 13, 3.6, 17, 6.5],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 13, 5, 17, 8],
           "circle-color": "#ffffff",
           "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 16, 2.4],
           "circle-stroke-color": "#334155",
