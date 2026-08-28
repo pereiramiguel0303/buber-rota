@@ -514,17 +514,21 @@ export default function CityMap({
         map.setLayoutProperty("routes-base", "visibility", "none");
       }
 
-      // Pontos do trajeto em destaque
-      const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
-      const stopFilter: maplibregl.FilterSpecification = line
-        ? ["in", ["get", "id"], ["literal", line.stopIds]]
-        : ["==", ["get", "id"], "__none__"];
-      ["stops-route", "stops-route-label"].forEach((id) => {
-        if (map.getLayer(id)) map.setFilter(id, stopFilter);
-      });
-      if (map.getLayer("stops-route")) {
-        map.setPaintProperty("stops-route", "circle-stroke-color", line?.color ?? "#12161b");
+      // Setas de sentido apenas na linha selecionada
+      if (map.getLayer("routes-direction")) {
+        map.setFilter("routes-direction", [
+          "==",
+          ["get", "lineId"],
+          selectedLineId ?? "__none__",
+        ]);
       }
+
+      // Pontos do trajeto em destaque (fonte dedicada, numerada)
+      const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
+      const lineStopsSrc = map.getSource("line-stops") as maplibregl.GeoJSONSource | undefined;
+      lineStopsSrc?.setData(lineStopsGeoJSON(selectedLineId));
+      const endpointsSrc = map.getSource("endpoints") as maplibregl.GeoJSONSource | undefined;
+      endpointsSrc?.setData(endpointsGeoJSON(selectedLineId));
       if (map.getLayer("stops-circle")) {
         map.setPaintProperty("stops-circle", "circle-opacity", line ? 0.45 : 0.95);
       }
