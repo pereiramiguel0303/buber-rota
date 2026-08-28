@@ -247,7 +247,7 @@ export default function CityMap({
         id: "routes-base",
         type: "line",
         source: "routes",
-        layout: { "line-cap": "round", "line-join": "round" },
+        layout: { "line-cap": "round", "line-join": "round", visibility: "none" },
         paint: {
           "line-color": ["get", "color"],
           "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2, 15, 4.5],
@@ -509,7 +509,10 @@ export default function CityMap({
         ["get", "lineId"],
         selectedLineId ?? "__none__",
       ]);
-      map.setPaintProperty("routes-base", "line-opacity", selectedLineId ? 0.12 : 0.4);
+      // Trajetos ficam ocultos até uma linha/ônibus ser selecionado
+      if (map.getLayer("routes-base")) {
+        map.setLayoutProperty("routes-base", "visibility", "none");
+      }
 
       // Pontos do trajeto em destaque
       const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
