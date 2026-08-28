@@ -16,25 +16,9 @@ export interface CityMapProps {
   onBackgroundClick: () => void;
 }
 
-const STYLE: maplibregl.StyleSpecification = {
-  version: 8,
-  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
-  sources: {
-    basemap: {
-      type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-      ],
-      tileSize: 256,
-      attribution: "© OpenStreetMap © CARTO",
-    },
-  },
-  layers: [
-    { id: "basemap", type: "raster", source: "basemap" },
-  ],
-};
+/** Estilo vetorial gratuito (OpenFreeMap) — claro, sem necessidade de chave de API. */
+const STYLE = "https://tiles.openfreemap.org/styles/bright";
+
 
 
 function routesGeoJSON(): FeatureCollection {
@@ -312,7 +296,7 @@ export default function CityMap({
         type: "circle",
         source: "stops",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.2, 13, 3.6, 17, 6.5],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 13, 5, 17, 8],
           "circle-color": "#ffffff",
           "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 16, 2.4],
           "circle-stroke-color": "#334155",
@@ -570,11 +554,20 @@ export default function CityMap({
   // Voo até ponto selecionado
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !selectedStopId) return;
+    if (!map) return;
+    const apply = () => {
+      if (map.getLayer("stop-selected")) {
+        map.setFilter("stop-selected", ["==", ["get", "id"], selectedStopId ?? "__none__"]);
+      }
+    };
+    if (map.isStyleLoaded()) apply();
+    else map.once("idle", apply);
+    if (!selectedStopId) return;
     const stop = STOPS.find((s) => s.id === selectedStopId);
     if (!stop) return;
     map.easeTo({ center: [stop.lon, stop.lat], zoom: Math.max(map.getZoom(), 15), duration: 800 });
   }, [selectedStopId]);
+
 
   // Localização do usuário
   useEffect(() => {
