@@ -247,7 +247,7 @@ export default function CityMap({
         id: "routes-base",
         type: "line",
         source: "routes",
-        layout: { "line-cap": "round", "line-join": "round" },
+        layout: { "line-cap": "round", "line-join": "round", visibility: "none" },
         paint: {
           "line-color": ["get", "color"],
           "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2, 15, 4.5],
@@ -509,19 +509,26 @@ export default function CityMap({
         ["get", "lineId"],
         selectedLineId ?? "__none__",
       ]);
-      map.setPaintProperty("routes-base", "line-opacity", selectedLineId ? 0.12 : 0.4);
-
-      // Pontos do trajeto em destaque
-      const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
-      const stopFilter: maplibregl.FilterSpecification = line
-        ? ["in", ["get", "id"], ["literal", line.stopIds]]
-        : ["==", ["get", "id"], "__none__"];
-      ["stops-route", "stops-route-label"].forEach((id) => {
-        if (map.getLayer(id)) map.setFilter(id, stopFilter);
-      });
-      if (map.getLayer("stops-route")) {
-        map.setPaintProperty("stops-route", "circle-stroke-color", line?.color ?? "#12161b");
+      // Trajetos ficam ocultos até uma linha/ônibus ser selecionado
+      if (map.getLayer("routes-base")) {
+        map.setLayoutProperty("routes-base", "visibility", "none");
       }
+
+      // Setas de sentido apenas na linha selecionada
+      if (map.getLayer("routes-direction")) {
+        map.setFilter("routes-direction", [
+          "==",
+          ["get", "lineId"],
+          selectedLineId ?? "__none__",
+        ]);
+      }
+
+      // Pontos do trajeto em destaque (fonte dedicada, numerada)
+      const line = selectedLineId ? LINES_BY_ID[selectedLineId] : undefined;
+      const lineStopsSrc = map.getSource("line-stops") as maplibregl.GeoJSONSource | undefined;
+      lineStopsSrc?.setData(lineStopsGeoJSON(selectedLineId));
+      const endpointsSrc = map.getSource("endpoints") as maplibregl.GeoJSONSource | undefined;
+      endpointsSrc?.setData(endpointsGeoJSON(selectedLineId));
       if (map.getLayer("stops-circle")) {
         map.setPaintProperty("stops-circle", "circle-opacity", line ? 0.45 : 0.95);
       }
