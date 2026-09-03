@@ -2,6 +2,7 @@ import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef } from "react";
 import { CITY_CENTER, LINES, LINES_BY_ID, STOPS, lineShape } from "@/lib/transit/network";
+import { CITY_STOPS, LINE_CITY_STOPS } from "@/lib/transit/citystops.generated";
 import type { FeatureCollection } from "geojson";
 import type { Bus } from "@/lib/transit/types";
 
@@ -17,31 +18,39 @@ export interface CityMapProps {
 }
 
 /**
- * Estilo base próprio (raster, sem chave de API e sem depender de um style JSON externo).
- * Usa tiles claros da Carto (CDN pública) e glifos do OpenFreeMap para os rótulos.
+ * Base clara sem chave de API e sem marca-d'água: estilo vetorial Positron do
+ * OpenFreeMap. Se o style externo falhar, usamos os tiles raster do
+ * OpenStreetMap como reserva (também livres de chave).
  */
-const STYLE: maplibregl.StyleSpecification = {
+const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
+
+const FALLBACK_STYLE: maplibregl.StyleSpecification = {
   version: 8,
   glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
   sources: {
     basemap: {
       type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-        "https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png",
-      ],
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
       tileSize: 256,
-      maxzoom: 20,
+      maxzoom: 19,
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     },
   },
   layers: [
     { id: "basemap", type: "raster", source: "basemap", paint: { "raster-opacity": 1 } },
   ],
 };
+
+async function resolveStyle(): Promise<maplibregl.StyleSpecification> {
+  try {
+    const res = await fetch(STYLE_URL);
+    if (!res.ok) throw new Error(String(res.status));
+    return (await res.json()) as maplibregl.StyleSpecification;
+  } catch {
+    return FALLBACK_STYLE;
+  }
+}
 
 
 
@@ -73,6 +82,39 @@ function stopsGeoJSON(): FeatureCollection {
       },
       geometry: { type: "Point", coordinates: [s.lon, s.lat] },
     })),
+  };
+}
+
+/** Todas as paradas reais de São Leopoldo (OpenStreetMap) — pontinhos sutis. */
+function cityStopsGeoJSON(): FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: CITY_STOPS.map((s) => ({
+      type: "Feature",
+      properties: { id: s.id, name: s.name },
+      geometry: { type: "Point", coordinates: [s.lon, s.lat] },
+    })),
+  };
+}
+
+/** Paradas reais atendidas pela linha selecionada, na ordem do trajeto. */
+function lineCityStopsGeoJSON(lineId?: string): FeatureCollection {
+  const line = lineId ? LINES_BY_ID[lineId] : undefined;
+  const ids = lineId ? (LINE_CITY_STOPS[lineId] ?? []) : [];
+  if (!line || ids.length === 0) return { type: "FeatureCollection", features: [] };
+  return {
+    type: "FeatureCollection",
+    features: ids.flatMap((id, i) => {
+      const s = CITY_STOPS.find((x) => x.id === id);
+      if (!s) return [];
+      return [
+        {
+          type: "Feature" as const,
+          properties: { id: s.id, name: s.name, seq: String(i + 1), color: line.color },
+          geometry: { type: "Point" as const, coordinates: [s.lon, s.lat] },
+        },
+      ];
+    }),
   };
 }
 
@@ -253,7 +295,7 @@ export default function CityMap({
     if (!containerRef.current || mapRef.current) return;
     const map = new maplibregl.Map({
       container: containerRef.current,
-      style: STYLE,
+      style: STYLE_URL,
       center: [CITY_CENTER.lon, CITY_CENTER.lat],
       zoom: 12.4,
       minZoom: 10,
@@ -266,7 +308,17 @@ export default function CityMap({
     (window as unknown as Record<string, unknown>)["__mobislMap"] = map;
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
-    map.on("load", () => {
+    let usedFallback = false;
+    map.on("error", (e) => {
+      const msg = String((e as unknown as { error?: Error }).error?.message ?? "");
+      if (!usedFallback && /style|positron|Failed to fetch/i.test(msg)) {
+        usedFallback = true;
+        map.setStyle(FALLBACK_STYLE);
+      }
+    });
+
+    const setup = () => {
+      if (map.getSource("routes")) return;
       map.addSource("routes", { type: "geojson", data: routesGeoJSON() });
       map.addLayer({
         id: "routes-base",
@@ -311,6 +363,73 @@ export default function CityMap({
           "icon-rotation-alignment": "map",
           "icon-allow-overlap": true,
           "icon-ignore-placement": true,
+        },
+      });
+
+      // Todas as paradas reais da cidade (OpenStreetMap) — pontinhos discretos
+      map.addSource("city-stops", { type: "geojson", data: cityStopsGeoJSON() });
+      map.addLayer({
+        id: "city-stops-circle",
+        type: "circle",
+        source: "city-stops",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 1.6, 14, 2.8, 17, 4.5],
+          "circle-color": "#0f6b70",
+          "circle-opacity": ["interpolate", ["linear"], ["zoom"], 11, 0.35, 14, 0.6],
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 13, 0.6, 17, 1.4],
+          "circle-stroke-color": "#ffffff",
+        },
+      });
+      map.addLayer({
+        id: "city-stops-label",
+        type: "symbol",
+        source: "city-stops",
+        minzoom: 15.4,
+        layout: {
+          "text-field": ["get", "name"],
+          "text-size": 10,
+          "text-offset": [0, 0.9],
+          "text-anchor": "top",
+          "text-font": ["Noto Sans Regular"],
+          "text-optional": true,
+        },
+        paint: {
+          "text-color": "#475569",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 1.6,
+        },
+      });
+
+      // Paradas reais atendidas pela linha selecionada
+      map.addSource("city-line-stops", { type: "geojson", data: lineCityStopsGeoJSON() });
+      map.addLayer({
+        id: "city-line-stops-circle",
+        type: "circle",
+        source: "city-line-stops",
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 3.2, 14, 5, 17, 7],
+          "circle-color": "#ffffff",
+          "circle-stroke-width": 2.4,
+          "circle-stroke-color": ["get", "color"],
+        },
+      });
+      map.addLayer({
+        id: "city-line-stops-label",
+        type: "symbol",
+        source: "city-line-stops",
+        minzoom: 13.8,
+        layout: {
+          "text-field": ["get", "name"],
+          "text-size": 11,
+          "text-offset": [0, 0.95],
+          "text-anchor": "top",
+          "text-font": ["Noto Sans Regular"],
+          "text-optional": true,
+        },
+        paint: {
+          "text-color": "#0f172a",
+          "text-halo-color": "#ffffff",
+          "text-halo-width": 2,
         },
       });
 
@@ -455,7 +574,13 @@ export default function CityMap({
 
       readyRef.current = true;
       map.resize();
+    };
+
+    map.on("load", setup);
+    map.on("styledata", () => {
+      if (map.isStyleLoaded()) setup();
     });
+
 
     // Garante que o mapa acompanhe o tamanho real do contêiner (iframe/preview)
     const ro = new ResizeObserver(() => map.resize());
@@ -554,9 +679,23 @@ export default function CityMap({
       lineStopsSrc?.setData(lineStopsGeoJSON(selectedLineId));
       const endpointsSrc = map.getSource("endpoints") as maplibregl.GeoJSONSource | undefined;
       endpointsSrc?.setData(endpointsGeoJSON(selectedLineId));
+      const cityLineSrc = map.getSource("city-line-stops") as
+        | maplibregl.GeoJSONSource
+        | undefined;
+      cityLineSrc?.setData(lineCityStopsGeoJSON(selectedLineId));
+      if (map.getLayer("city-stops-circle")) {
+        map.setPaintProperty(
+          "city-stops-circle",
+          "circle-opacity",
+          line
+            ? 0.18
+            : (["interpolate", ["linear"], ["zoom"], 11, 0.35, 14, 0.6] as unknown as number),
+        );
+      }
       if (map.getLayer("stops-circle")) {
         map.setPaintProperty("stops-circle", "circle-opacity", line ? 0.45 : 0.95);
       }
+
 
       if (line && !selectedBusId) {
         const coords = lineShape(line);
