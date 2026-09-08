@@ -284,17 +284,19 @@ export default function CityMap({
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
+  onStatus,
 }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Record<string, maplibregl.Marker>>({});
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const readyRef = useRef(false);
-  const handlers = useRef({ onSelectBus, onSelectStop, onBackgroundClick });
-  handlers.current = { onSelectBus, onSelectStop, onBackgroundClick };
+  const handlers = useRef({ onSelectBus, onSelectStop, onBackgroundClick, onStatus });
+  handlers.current = { onSelectBus, onSelectStop, onBackgroundClick, onStatus };
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    handlers.current.onStatus?.("loading");
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: STYLE_URL,
@@ -311,13 +313,25 @@ export default function CityMap({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
     let usedFallback = false;
+    const useFallback = () => {
+      if (usedFallback) return;
+      usedFallback = true;
+      try {
+        map.setStyle(FALLBACK_STYLE);
+      } catch {
+        handlers.current.onStatus?.("error");
+      }
+    };
     map.on("error", (e) => {
       const msg = String((e as unknown as { error?: Error }).error?.message ?? "");
-      if (!usedFallback && /style|positron|Failed to fetch/i.test(msg)) {
-        usedFallback = true;
-        map.setStyle(FALLBACK_STYLE);
-      }
+      if (/style|positron|Failed to fetch|NetworkError|403|404/i.test(msg)) useFallback();
     });
+    // Se a base vetorial não pintar em 7s (rede lenta/bloqueio no domínio publicado),
+    // trocamos automaticamente para os tiles raster livres do OpenStreetMap.
+    const guard = window.setTimeout(() => {
+      if (!map.isStyleLoaded() || !map.loaded()) useFallback();
+    }, 7000);
+
 
     const setup = () => {
       if (map.getSource("routes")) return;
