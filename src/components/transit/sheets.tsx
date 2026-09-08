@@ -26,21 +26,27 @@ export function SheetShell({
     <section
       role="dialog"
       aria-label={title}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 max-h-[62vh] overflow-y-auto rounded-t-3xl border-t border-border bg-card shadow-[var(--shadow-sheet)] duration-300 animate-in slide-in-from-bottom"
+      onClick={(e) => e.stopPropagation()}
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 max-h-[48dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-border bg-card shadow-[var(--shadow-sheet)] duration-300 animate-in slide-in-from-bottom sm:mx-auto sm:max-w-xl sm:max-h-[62dvh] sm:rounded-3xl"
     >
       <div className="sticky top-0 z-10 bg-card/95 px-4 pt-3 backdrop-blur">
         <div className="mx-auto h-1.5 w-12 rounded-full bg-border" />
         <button
           type="button"
-          onClick={onClose}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           aria-label="Fechar painel"
-          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-secondary text-secondary-foreground"
+          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-secondary text-secondary-foreground transition-transform active:scale-95"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
-      <div className="px-4 pb-24 pt-3">{children}</div>
+      <div className="px-4 pb-20 pt-3">{children}</div>
     </section>
+
   );
 }
 
