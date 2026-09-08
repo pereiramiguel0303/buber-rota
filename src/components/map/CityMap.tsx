@@ -15,7 +15,9 @@ export interface CityMapProps {
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
+  onStatus?: ((status: "loading" | "ready" | "error") => void) | undefined;
 }
+
 
 /**
  * Base clara sem chave de API e sem marca-d'água: estilo vetorial Positron do
