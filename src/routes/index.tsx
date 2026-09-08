@@ -92,7 +92,9 @@ function MapPage() {
             }
             onSelectStop={(id) => setSelection({ ponto: id, linha: search.linha })}
             onBackgroundClick={() => setSelection({})}
+            onStatus={setMapStatus}
           />
+
         </Suspense>
       </ClientOnly>
 
@@ -211,14 +213,44 @@ function MapPage() {
         </button>
       </div>
 
+      {/* Estado do mapa */}
+      {mapStatus !== "ready" && (
+        <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center bg-secondary/60 backdrop-blur-[1px]">
+          <div className="rounded-2xl border border-border bg-card/95 px-4 py-3 text-center shadow-[var(--shadow-float)]">
+            {mapStatus === "loading" ? (
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Radar className="h-4 w-4 animate-pulse text-primary" />
+                Carregando mapa…
+              </p>
+            ) : (
+              <p className="max-w-[16rem] text-sm font-medium">
+                Não foi possível carregar o mapa. Verifique sua conexão e tente novamente.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Contador da frota */}
       <div className="absolute bottom-24 left-3 z-20 rounded-2xl border border-border bg-card/95 px-3 py-2 text-xs shadow-[var(--shadow-float)] backdrop-blur">
-        <p className="font-semibold">
-          {search.linha ? `Linha ${search.linha}` : `Rede de ${CITY_NAME}`}
+        <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+          <span
+            className={`h-2 w-2 rounded-full ${
+              mapStatus === "ready"
+                ? "animate-pulse bg-emerald-500"
+                : mapStatus === "loading"
+                  ? "bg-amber-400"
+                  : "bg-red-500"
+            }`}
+          />
+          {mapStatus === "ready" ? "Rede ao vivo" : mapStatus === "loading" ? "Conectando" : "Indisponível"}
+        </p>
+        <p className="mt-0.5 font-semibold">
+          {search.linha ? `Linha ${search.linha}` : CITY_NAME}
         </p>
         <p className="text-muted-foreground">
-          {(search.linha ? buses.filter((b) => b.lineId === search.linha) : buses).length} ônibus ao
-          vivo
+          {(search.linha ? buses.filter((b) => b.lineId === search.linha) : buses).length} ônibus em
+          operação
         </p>
       </div>
 
@@ -234,7 +266,7 @@ function MapPage() {
       {!showNearby && selectedBus && (
         <BusSheet
           bus={selectedBus}
-          onClose={() => setSelection({ linha: search.linha })}
+          onClose={() => setSelection({})}
           onSelectLine={(id) => setSelection({ linha: id })}
         />
       )}
@@ -242,10 +274,11 @@ function MapPage() {
         <StopSheet
           stopId={search.ponto}
           buses={buses}
-          onClose={() => setSelection({ linha: search.linha })}
+          onClose={() => setSelection({})}
           onSelectLine={(id) => setSelection({ linha: id })}
         />
       )}
+
       {!showNearby && !selectedBus && !search.ponto && search.linha && (
         <LineSheet
           lineId={search.linha}
