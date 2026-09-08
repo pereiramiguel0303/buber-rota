@@ -26,21 +26,27 @@ export function SheetShell({
     <section
       role="dialog"
       aria-label={title}
-      className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 max-h-[62vh] overflow-y-auto rounded-t-3xl border-t border-border bg-card shadow-[var(--shadow-sheet)] duration-300 animate-in slide-in-from-bottom"
+      onClick={(e) => e.stopPropagation()}
+      className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 max-h-[48dvh] overflow-y-auto overscroll-contain rounded-t-3xl border-t border-border bg-card shadow-[var(--shadow-sheet)] duration-300 animate-in slide-in-from-bottom sm:mx-auto sm:max-w-xl sm:max-h-[62dvh] sm:rounded-3xl"
     >
       <div className="sticky top-0 z-10 bg-card/95 px-4 pt-3 backdrop-blur">
         <div className="mx-auto h-1.5 w-12 rounded-full bg-border" />
         <button
           type="button"
-          onClick={onClose}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
           aria-label="Fechar painel"
-          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-secondary text-secondary-foreground"
+          className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-secondary text-secondary-foreground transition-transform active:scale-95"
         >
           <X className="h-4 w-4" />
         </button>
       </div>
-      <div className="px-4 pb-24 pt-3">{children}</div>
+      <div className="px-4 pb-20 pt-3">{children}</div>
     </section>
+
   );
 }
 
@@ -50,70 +56,80 @@ export function BusSheet({ bus, onClose, onSelectLine }: { bus: Bus; onClose: ()
 
   return (
     <SheetShell title={`Ônibus ${bus.id}`} onClose={onClose}>
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 pr-10">
         <LineBadge lineId={bus.lineId} size="lg" />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-bold tracking-tight">{bus.id}</h2>
+          <h2 className="truncate text-lg font-bold tracking-tight">{bus.id}</h2>
           <p className="truncate text-sm text-muted-foreground">
             Linha {bus.lineId} → {bus.destination}
           </p>
+          <div className="mt-1.5">
+            <StatusPill status={bus.status} />
+          </div>
         </div>
-        <StatusPill status={bus.status} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <Metric icon={<Gauge className="h-4 w-4" />} label="Velocidade" value={`${bus.speed} km/h`} />
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Metric icon={<Gauge className="h-3.5 w-3.5" />} label="Velocidade" value={`${bus.speed} km/h`} />
         <Metric
-          icon={<Navigation className="h-4 w-4" />}
-          label="Chegada estimada"
+          icon={<Navigation className="h-3.5 w-3.5" />}
+          label="Chegada"
           value={`${bus.etaMin} min`}
         />
-        <div className="col-span-2 rounded-2xl border border-border bg-secondary/40 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima parada
-          </p>
-          <p className="mt-1 flex items-center gap-2 font-semibold">
-            <MapPin className="h-4 w-4 text-primary" />
-            {nextStop?.name ?? "—"}
-          </p>
-        </div>
+        <Metric
+          icon={<Navigation className="h-3.5 w-3.5" />}
+          label="Sentido"
+          value={`${Math.round(bus.bearing)}°`}
+        />
       </div>
 
-      <div className="mt-4">
-        <h3 className="mb-2 text-sm font-semibold">Acessibilidade do veículo</h3>
+      <div className="mt-2 rounded-2xl border border-border bg-secondary/40 p-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Próxima parada
+        </p>
+        <p className="mt-0.5 flex items-center gap-2 text-sm font-semibold">
+          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+          <span className="truncate">{nextStop?.name ?? "—"}</span>
+        </p>
+      </div>
+
+      <div className="mt-3">
         <AccessibilityChips features={bus.accessibility} />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => onSelectLine(bus.lineId)}
-          className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          className="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-transform active:scale-[.97]"
         >
           Ver rota da linha
         </button>
         <Link
           to="/linhas/$lineId"
           params={{ lineId: bus.lineId }}
-          className="inline-flex h-11 items-center rounded-full border border-border px-5 text-sm font-semibold"
+          className="inline-flex h-10 items-center rounded-full border border-border px-4 text-sm font-semibold"
         >
-          Detalhes da linha {line?.id}
+          Linha {line?.id}
         </Link>
         <SimulationTag />
       </div>
+
     </SheetShell>
   );
 }
 
 function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-secondary/40 p-3">
-      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-2xl border border-border bg-secondary/40 p-2.5">
+      <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {icon}
-        {label}
+        <span className="truncate">{label}</span>
       </p>
-      <p className="mt-1 text-lg font-bold">{value}</p>
+      <p className="mt-0.5 truncate text-base font-bold">{value}</p>
     </div>
+
   );
 }
 

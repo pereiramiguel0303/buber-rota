@@ -15,7 +15,9 @@ export interface CityMapProps {
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
+  onStatus?: ((status: "loading" | "ready" | "error") => void) | undefined;
 }
+
 
 /**
  * Base clara sem chave de API e sem marca-d'água: estilo vetorial Positron do
@@ -227,7 +229,7 @@ function busElement(bus: Bus, selected: boolean) {
   inner.style.setProperty("--scale", selected ? "1.3" : "1");
 
   inner.innerHTML = `
-  <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <svg width="100%" height="100%" viewBox="0 0 52 52" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="body-${uid}" x1="0.1" y1="0" x2="0.95" y2="1">
         <stop offset="0%" stop-color="${light}"/>
@@ -282,17 +284,19 @@ export default function CityMap({
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
+  onStatus,
 }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<Record<string, maplibregl.Marker>>({});
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const readyRef = useRef(false);
-  const handlers = useRef({ onSelectBus, onSelectStop, onBackgroundClick });
-  handlers.current = { onSelectBus, onSelectStop, onBackgroundClick };
+  const handlers = useRef({ onSelectBus, onSelectStop, onBackgroundClick, onStatus });
+  handlers.current = { onSelectBus, onSelectStop, onBackgroundClick, onStatus };
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
+    handlers.current.onStatus?.("loading");
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: STYLE_URL,
@@ -309,13 +313,25 @@ export default function CityMap({
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
 
     let usedFallback = false;
+    const useFallback = () => {
+      if (usedFallback) return;
+      usedFallback = true;
+      try {
+        map.setStyle(FALLBACK_STYLE);
+      } catch {
+        handlers.current.onStatus?.("error");
+      }
+    };
     map.on("error", (e) => {
       const msg = String((e as unknown as { error?: Error }).error?.message ?? "");
-      if (!usedFallback && /style|positron|Failed to fetch/i.test(msg)) {
-        usedFallback = true;
-        map.setStyle(FALLBACK_STYLE);
-      }
+      if (/style|positron|Failed to fetch|NetworkError|403|404/i.test(msg)) useFallback();
     });
+    // Se a base vetorial não pintar em 7s (rede lenta/bloqueio no domínio publicado),
+    // trocamos automaticamente para os tiles raster livres do OpenStreetMap.
+    const guard = window.setTimeout(() => {
+      if (!map.isStyleLoaded() || !map.loaded()) useFallback();
+    }, 7000);
+
 
     const setup = () => {
       if (map.getSource("routes")) return;
@@ -440,11 +456,12 @@ export default function CityMap({
         type: "circle",
         source: "stops",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 13, 5, 17, 8],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.2, 13, 3.4, 17, 5.5],
           "circle-color": "#ffffff",
-          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 16, 2.4],
-          "circle-stroke-color": "#334155",
-          "circle-opacity": 0.95,
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 16, 1.8],
+          "circle-stroke-color": "#0f6b70",
+          "circle-opacity": 0.9,
+
         },
       });
       // Área de toque generosa (invisível) para os pontos
@@ -573,6 +590,8 @@ export default function CityMap({
       });
 
       readyRef.current = true;
+      handlers.current.onStatus?.("ready");
+
       map.resize();
     };
 
@@ -590,7 +609,9 @@ export default function CityMap({
     window.addEventListener("resize", onWinResize);
 
     return () => {
+      window.clearTimeout(guard);
       cancelAnimationFrame(raf);
+
       window.removeEventListener("resize", onWinResize);
       ro.disconnect();
       Object.values(markersRef.current).forEach((m) => m.remove());
