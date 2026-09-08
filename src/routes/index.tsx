@@ -61,6 +61,8 @@ function MapPage() {
   const { coords, locate } = useUserLocation();
   const [query, setQuery] = useState("");
   const [showNearby, setShowNearby] = useState(false);
+  const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">("loading");
+
 
   const results = useMemo(() => searchNetwork(query, buses), [query, buses]);
   const selectedBus = buses.find((b) => b.id === search.onibus);
