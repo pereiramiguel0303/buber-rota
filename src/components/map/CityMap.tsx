@@ -456,11 +456,12 @@ export default function CityMap({
         type: "circle",
         source: "stops",
         paint: {
-          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 13, 5, 17, 8],
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2.2, 13, 3.4, 17, 5.5],
           "circle-color": "#ffffff",
-          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 16, 2.4],
-          "circle-stroke-color": "#334155",
-          "circle-opacity": 0.95,
+          "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 16, 1.8],
+          "circle-stroke-color": "#0f6b70",
+          "circle-opacity": 0.9,
+
         },
       });
       // Área de toque generosa (invisível) para os pontos
@@ -589,6 +590,8 @@ export default function CityMap({
       });
 
       readyRef.current = true;
+      handlers.current.onStatus?.("ready");
+
       map.resize();
     };
 
@@ -606,7 +609,9 @@ export default function CityMap({
     window.addEventListener("resize", onWinResize);
 
     return () => {
+      window.clearTimeout(guard);
       cancelAnimationFrame(raf);
+
       window.removeEventListener("resize", onWinResize);
       ro.disconnect();
       Object.values(markersRef.current).forEach((m) => m.remove());
