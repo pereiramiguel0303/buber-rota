@@ -229,7 +229,7 @@ function busElement(bus: Bus, selected: boolean) {
   inner.style.setProperty("--scale", selected ? "1.3" : "1");
 
   inner.innerHTML = `
-  <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <svg width="100%" height="100%" viewBox="0 0 52 52" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="body-${uid}" x1="0.1" y1="0" x2="0.95" y2="1">
         <stop offset="0%" stop-color="${light}"/>
