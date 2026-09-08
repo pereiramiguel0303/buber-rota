@@ -119,13 +119,14 @@ export function BusSheet({ bus, onClose, onSelectLine }: { bus: Bus; onClose: ()
 
 function Metric({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-secondary/40 p-3">
-      <p className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-2xl border border-border bg-secondary/40 p-2.5">
+      <p className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
         {icon}
-        {label}
+        <span className="truncate">{label}</span>
       </p>
-      <p className="mt-1 text-lg font-bold">{value}</p>
+      <p className="mt-0.5 truncate text-base font-bold">{value}</p>
     </div>
+
   );
 }
 
