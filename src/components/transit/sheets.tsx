@@ -56,16 +56,19 @@ export function BusSheet({ bus, onClose, onSelectLine }: { bus: Bus; onClose: ()
 
   return (
     <SheetShell title={`Ônibus ${bus.id}`} onClose={onClose}>
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 pr-10">
         <LineBadge lineId={bus.lineId} size="lg" />
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-bold tracking-tight">{bus.id}</h2>
+          <h2 className="truncate text-lg font-bold tracking-tight">{bus.id}</h2>
           <p className="truncate text-sm text-muted-foreground">
             Linha {bus.lineId} → {bus.destination}
           </p>
+          <div className="mt-1.5">
+            <StatusPill status={bus.status} />
+          </div>
         </div>
-        <StatusPill status={bus.status} />
       </div>
+
 
       <div className="mt-3 grid grid-cols-3 gap-2">
         <Metric icon={<Gauge className="h-3.5 w-3.5" />} label="Velocidade" value={`${bus.speed} km/h`} />
