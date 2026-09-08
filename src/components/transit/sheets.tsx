@@ -67,46 +67,52 @@ export function BusSheet({ bus, onClose, onSelectLine }: { bus: Bus; onClose: ()
         <StatusPill status={bus.status} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <Metric icon={<Gauge className="h-4 w-4" />} label="Velocidade" value={`${bus.speed} km/h`} />
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <Metric icon={<Gauge className="h-3.5 w-3.5" />} label="Velocidade" value={`${bus.speed} km/h`} />
         <Metric
-          icon={<Navigation className="h-4 w-4" />}
-          label="Chegada estimada"
+          icon={<Navigation className="h-3.5 w-3.5" />}
+          label="Chegada"
           value={`${bus.etaMin} min`}
         />
-        <div className="col-span-2 rounded-2xl border border-border bg-secondary/40 p-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Próxima parada
-          </p>
-          <p className="mt-1 flex items-center gap-2 font-semibold">
-            <MapPin className="h-4 w-4 text-primary" />
-            {nextStop?.name ?? "—"}
-          </p>
-        </div>
+        <Metric
+          icon={<Navigation className="h-3.5 w-3.5" />}
+          label="Sentido"
+          value={`${Math.round(bus.bearing)}°`}
+        />
       </div>
 
-      <div className="mt-4">
-        <h3 className="mb-2 text-sm font-semibold">Acessibilidade do veículo</h3>
+      <div className="mt-2 rounded-2xl border border-border bg-secondary/40 p-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          Próxima parada
+        </p>
+        <p className="mt-0.5 flex items-center gap-2 text-sm font-semibold">
+          <MapPin className="h-4 w-4 shrink-0 text-primary" />
+          <span className="truncate">{nextStop?.name ?? "—"}</span>
+        </p>
+      </div>
+
+      <div className="mt-3">
         <AccessibilityChips features={bus.accessibility} />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => onSelectLine(bus.lineId)}
-          className="inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground"
+          className="inline-flex h-10 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground transition-transform active:scale-[.97]"
         >
           Ver rota da linha
         </button>
         <Link
           to="/linhas/$lineId"
           params={{ lineId: bus.lineId }}
-          className="inline-flex h-11 items-center rounded-full border border-border px-5 text-sm font-semibold"
+          className="inline-flex h-10 items-center rounded-full border border-border px-4 text-sm font-semibold"
         >
-          Detalhes da linha {line?.id}
+          Linha {line?.id}
         </Link>
         <SimulationTag />
       </div>
+
     </SheetShell>
   );
 }
