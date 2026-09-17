@@ -779,7 +779,7 @@ export default function CityMap({
 
     if (!userMarkerRef.current) {
       const el = document.createElement("div");
-      el.dataset.live = isLive ? "1" : "0";
+      el.dataset['live'] = isLive ? "1" : "0";
       if (isLive) {
         el.className = "mobisl-live-marker";
         el.innerHTML = `
