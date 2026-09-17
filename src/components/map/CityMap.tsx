@@ -12,7 +12,7 @@ export interface CityMapProps {
   selectedBusId?: string | undefined;
   selectedStopId?: string | undefined;
   userLocation?: { lat: number; lon: number } | null | undefined;
-  liveLabel?: string;
+  liveLabel?: string | undefined;
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
@@ -769,7 +769,7 @@ export default function CityMap({
     if (!map || !userLocation) return;
 
     const isLive = Boolean(liveLabel);
-    const prevLive = userMarkerRef.current?.element.dataset.live === "1";
+    const prevLive = userMarkerRef.current?.getElement?.()?.dataset?.['live'] === "1";
 
     // Reconstrói o marcador se o tipo mudou (ponto comum <-> veículo ao vivo)
     if (userMarkerRef.current && prevLive !== isLive) {
@@ -779,7 +779,7 @@ export default function CityMap({
 
     if (!userMarkerRef.current) {
       const el = document.createElement("div");
-      el.dataset.live = isLive ? "1" : "0";
+      el.dataset['live'] = isLive ? "1" : "0";
       if (isLive) {
         el.className = "mobisl-live-marker";
         el.innerHTML = `
