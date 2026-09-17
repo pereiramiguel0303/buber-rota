@@ -12,6 +12,7 @@ export interface CityMapProps {
   selectedBusId?: string | undefined;
   selectedStopId?: string | undefined;
   userLocation?: { lat: number; lon: number } | null | undefined;
+  liveLabel?: string;
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
@@ -281,6 +282,7 @@ export default function CityMap({
   selectedBusId,
   selectedStopId,
   userLocation,
+  liveLabel,
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
@@ -761,15 +763,42 @@ export default function CityMap({
   }, [selectedStopId]);
 
 
-  // Localização do usuário
+  // Localização do usuário (ou do veículo em tempo real, ex.: TESTE-1)
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !userLocation) return;
+
+    const isLive = Boolean(liveLabel);
+    const prevLive = userMarkerRef.current?.element.dataset.live === "1";
+
+    // Reconstrói o marcador se o tipo mudou (ponto comum <-> veículo ao vivo)
+    if (userMarkerRef.current && prevLive !== isLive) {
+      userMarkerRef.current.remove();
+      userMarkerRef.current = null;
+    }
+
     if (!userMarkerRef.current) {
       const el = document.createElement("div");
-      el.className = "mobisl-pulse";
-      el.style.cssText =
-        "position:relative;width:16px;height:16px;border-radius:9999px;background:#0f6b70;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)";
+      el.dataset.live = isLive ? "1" : "0";
+      if (isLive) {
+        el.className = "mobisl-live-marker";
+        el.innerHTML = `
+          <span class="mobisl-live-ring"></span>
+          <span class="mobisl-live-ring mobisl-live-ring--slow"></span>
+          <span class="mobisl-live-dot"></span>
+          <span class="mobisl-live-chip">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 21s-6-5.6-6-11a6 6 0 1 1 12 0c0 5.4-6 11-6 11z"/>
+              <circle cx="12" cy="10" r="2.2" fill="currentColor" stroke="none"/>
+            </svg>
+            ${liveLabel}
+          </span>
+        `;
+      } else {
+        el.className = "mobisl-pulse";
+        el.style.cssText =
+          "position:relative;width:16px;height:16px;border-radius:9999px;background:#0f6b70;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3)";
+      }
       userMarkerRef.current = new maplibregl.Marker({ element: el }).setLngLat([
         userLocation.lon,
         userLocation.lat,
@@ -779,7 +808,7 @@ export default function CityMap({
       userMarkerRef.current.setLngLat([userLocation.lon, userLocation.lat]);
     }
     map.easeTo({ center: [userLocation.lon, userLocation.lat], zoom: 14.5, duration: 900 });
-  }, [userLocation]);
+  }, [userLocation, liveLabel]);
 
   return (
     <div
