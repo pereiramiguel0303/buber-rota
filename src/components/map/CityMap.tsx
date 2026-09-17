@@ -282,6 +282,7 @@ export default function CityMap({
   selectedBusId,
   selectedStopId,
   userLocation,
+  liveLabel,
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
