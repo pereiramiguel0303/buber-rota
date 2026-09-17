@@ -1,6 +1,6 @@
 import { ClientOnly, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Crosshair, Locate, Radar, Search, X } from "lucide-react";
-import { Suspense, lazy, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { BusSheet, LineSheet, NearbySheet, StopSheet } from "@/components/transit/sheets";
 import { LineBadge } from "@/components/transit/ui";
 import { CITY_NAME, LINES } from "@/lib/transit/network";
