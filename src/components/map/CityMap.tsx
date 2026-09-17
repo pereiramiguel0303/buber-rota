@@ -769,7 +769,7 @@ export default function CityMap({
     if (!map || !userLocation) return;
 
     const isLive = Boolean(liveLabel);
-    const prevLive = userMarkerRef.current?.element.dataset.live === "1";
+    const prevLive = userMarkerRef.current?.getElement?.()?.dataset?.['live'] === "1";
 
     // Reconstrói o marcador se o tipo mudou (ponto comum <-> veículo ao vivo)
     if (userMarkerRef.current && prevLive !== isLive) {
