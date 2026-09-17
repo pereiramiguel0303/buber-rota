@@ -12,6 +12,7 @@ export interface CityMapProps {
   selectedBusId?: string | undefined;
   selectedStopId?: string | undefined;
   userLocation?: { lat: number; lon: number } | null | undefined;
+  liveLabel?: string;
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
