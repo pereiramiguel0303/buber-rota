@@ -63,6 +63,41 @@ function MapPage() {
   const [showNearby, setShowNearby] = useState(false);
   const [mapStatus, setMapStatus] = useState<"loading" | "ready" | "error">("loading");
 
+  // Localização em tempo real vinda do Firebase (GPS NEO-6M -> Arduino Mega),
+  // em vez da geolocalização do navegador.
+  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+
+    void (async () => {
+      const { onValue, ref } = await import("firebase/database");
+      const { db } = await import("@/lib/firebase");
+      if (cancelled) return;
+
+      const busRef = ref(db, "onibus/TESTE-1");
+      unsubscribe = onValue(busRef, (snapshot) => {
+        const data = snapshot.val() as
+          | { latitude?: number | string; longitude?: number | string }
+          | null;
+        if (!data) return;
+        const lat = Number.parseFloat(String(data.latitude));
+        const lon = Number.parseFloat(String(data.longitude));
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          setUserLocation({ lat, lon });
+        }
+      });
+    })();
+
+    // Limpeza: cancela o listener do Firebase ao desmontar (evita vazamento).
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, []);
+
+
 
   const results = useMemo(() => searchNetwork(query, buses), [query, buses]);
   const selectedBus = buses.find((b) => b.id === search.onibus);
@@ -86,7 +121,7 @@ function MapPage() {
             selectedLineId={search.linha}
             selectedBusId={search.onibus}
             selectedStopId={search.ponto}
-            userLocation={coords}
+            userLocation={userLocation ?? coords}
             onSelectBus={(id) =>
               setSelection({ onibus: id, linha: buses.find((b) => b.id === id)?.lineId })
             }
