@@ -842,7 +842,18 @@ export default function CityMap({
     } else {
       userMarkerRef.current.setLngLat([userLocation.lon, userLocation.lat]);
     }
-  }, [userLocation, liveLabel]);
+
+    // Aponta o ônibus ao vivo para a direção informada pelo GPS (graus, 0 = norte).
+    if (isLive) {
+      const element = userMarkerRef.current?.getElement?.();
+      const hasBearing =
+        typeof liveBearing === "number" && Number.isFinite(liveBearing) && liveBearing >= 0;
+      if (element) {
+        element.style.setProperty("--live-rot", `${hasBearing ? liveBearing % 360 : 0}deg`);
+        element.dataset['heading'] = hasBearing ? "1" : "0";
+      }
+    }
+  }, [userLocation, liveLabel, liveBearing]);
 
   return (
     <div
