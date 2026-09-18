@@ -8,13 +8,13 @@ import { useBuses } from "@/lib/transit/useTransit";
 export const Route = createFileRoute("/linhas/")({
   head: () => ({
     meta: [
-      { title: "Linhas de ônibus de São Leopoldo | MobiSL" },
+      { title: "Linhas de ônibus de São Leopoldo | BUBER — Passageiros" },
       {
         name: "description",
         content:
           "Lista completa das linhas de ônibus de São Leopoldo com frota ativa, intervalo médio, origem e destino.",
       },
-      { property: "og:title", content: "Linhas de ônibus de São Leopoldo | MobiSL" },
+      { property: "og:title", content: "Linhas de ônibus de São Leopoldo | BUBER — Passageiros" },
       {
         property: "og:description",
         content: "Consulte todas as linhas, a frota em circulação e o intervalo médio.",

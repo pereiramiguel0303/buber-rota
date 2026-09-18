@@ -21,8 +21,8 @@ export const Route = createFileRoute("/linhas/$lineId")({
   head: ({ loaderData }) => {
     const line = loaderData?.line;
     const title = line
-      ? `Linha ${line.id} — ${line.origin} → ${line.destination} | MobiSL`
-      : "Linha | MobiSL";
+      ? `Linha ${line.id} — ${line.origin} → ${line.destination} | BUBER — Passageiros`
+      : "Linha | BUBER — Passageiros";
     const description = line
       ? `Rota, pontos, previsão de chegada e acessibilidade da linha ${line.id} em São Leopoldo.`
       : "Detalhes da linha de ônibus em São Leopoldo.";

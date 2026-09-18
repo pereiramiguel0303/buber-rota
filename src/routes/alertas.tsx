@@ -9,13 +9,13 @@ import type { Alert } from "@/lib/transit/types";
 export const Route = createFileRoute("/alertas")({
   head: () => ({
     meta: [
-      { title: "Alertas e ocorrências do transporte | MobiSL" },
+      { title: "Alertas e ocorrências do transporte | BUBER — Passageiros" },
       {
         name: "description",
         content:
           "Atrasos, desvios e interrupções nas linhas de ônibus de São Leopoldo, além de canais de segurança.",
       },
-      { property: "og:title", content: "Alertas e ocorrências do transporte | MobiSL" },
+      { property: "og:title", content: "Alertas e ocorrências do transporte | BUBER — Passageiros" },
       {
         property: "og:description",
         content: "Acompanhe atrasos, desvios e interrupções da rede em tempo real.",

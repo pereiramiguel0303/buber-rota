@@ -9,13 +9,13 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/perfil")({
   head: () => ({
     meta: [
-      { title: "Perfil e acessibilidade | MobiSL" },
+      { title: "Perfil e acessibilidade | BUBER — Passageiros" },
       {
         name: "description",
         content:
           "Ajuste preferências de acessibilidade, notificações e veja a fonte de dados da rede de São Leopoldo.",
       },
-      { property: "og:title", content: "Perfil e acessibilidade | MobiSL" },
+      { property: "og:title", content: "Perfil e acessibilidade | BUBER — Passageiros" },
       {
         property: "og:description",
         content: "Preferências de acessibilidade, notificações e status da fonte de dados.",
