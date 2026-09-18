@@ -13,6 +13,8 @@ export interface CityMapProps {
   selectedStopId?: string | undefined;
   userLocation?: { lat: number; lon: number } | null | undefined;
   liveLabel?: string | undefined;
+  /** Direção (graus, 0 = norte) vinda do GPS. Use null/undefined ou valor negativo quando desconhecida. */
+  liveBearing?: number | null | undefined;
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
@@ -283,6 +285,7 @@ export default function CityMap({
   selectedStopId,
   userLocation,
   liveLabel,
+  liveBearing,
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
