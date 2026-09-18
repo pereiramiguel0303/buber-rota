@@ -791,6 +791,11 @@ export default function CityMap({
         el.innerHTML = `
           <span class="mobisl-live-ring"></span>
           <span class="mobisl-live-ring mobisl-live-ring--slow"></span>
+          <span class="mobisl-live-heading" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 0.5 19 12 12 8.6 5 12Z" fill="#ff4d1c" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+          </span>
           <span class="mobisl-live-bus" aria-hidden="true">
             <svg viewBox="0 0 52 52" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
