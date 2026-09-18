@@ -8,13 +8,13 @@ import { useFavorites } from "@/lib/favorites";
 export const Route = createFileRoute("/favoritos")({
   head: () => ({
     meta: [
-      { title: "Favoritos — linhas e pontos salvos | MobiSL" },
+      { title: "Favoritos — linhas e pontos salvos | BUBER — Passageiros" },
       {
         name: "description",
         content:
           "Acesse rapidamente suas linhas e pontos de ônibus favoritos em São Leopoldo com previsão de chegada.",
       },
-      { property: "og:title", content: "Favoritos — linhas e pontos salvos | MobiSL" },
+      { property: "og:title", content: "Favoritos — linhas e pontos salvos | BUBER — Passageiros" },
       {
         property: "og:description",
         content: "Suas linhas e paradas preferidas com chegadas em tempo real.",
