@@ -27,13 +27,13 @@ export const Route = createFileRoute("/")({
   }),
   head: () => ({
     meta: [
-      { title: "MobiSL — Ônibus em tempo real em São Leopoldo" },
+      { title: "BUBER — Passageiros | Ônibus em tempo real em São Leopoldo" },
       {
         name: "description",
         content:
           "Acompanhe a frota de ônibus de São Leopoldo no mapa: linhas, rotas, pontos, previsão de chegada, acessibilidade e alertas.",
       },
-      { property: "og:title", content: "MobiSL — Ônibus em tempo real em São Leopoldo" },
+      { property: "og:title", content: "BUBER — Passageiros | Ônibus em tempo real em São Leopoldo" },
       {
         property: "og:description",
         content: "Mapa vivo da rede de transporte público com frota, rotas e previsões.",
