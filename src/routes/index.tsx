@@ -66,6 +66,7 @@ function MapPage() {
   // Localização em tempo real vinda do Firebase (GPS NEO-6M -> Arduino Mega),
   // em vez da geolocalização do navegador.
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [liveBearing, setLiveBearing] = useState<number | null>(null);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
@@ -79,7 +80,11 @@ function MapPage() {
       const busRef = ref(db, "onibus/TESTE-1");
       unsubscribe = onValue(busRef, (snapshot) => {
         const data = snapshot.val() as
-          | { latitude?: number | string; longitude?: number | string }
+          | {
+              latitude?: number | string;
+              longitude?: number | string;
+              direcao?: number | string;
+            }
           | null;
         if (!data) return;
         const lat = Number.parseFloat(String(data.latitude));
@@ -87,6 +92,9 @@ function MapPage() {
         if (Number.isFinite(lat) && Number.isFinite(lon)) {
           setUserLocation({ lat, lon });
         }
+        // Direção (graus, 0 = norte). O GPS envia -1 quando ainda não sabe o rumo.
+        const bearing = Number.parseFloat(String(data.direcao));
+        setLiveBearing(Number.isFinite(bearing) && bearing >= 0 ? bearing : null);
       });
     })();
 
