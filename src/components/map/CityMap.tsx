@@ -618,6 +618,8 @@ export default function CityMap({
       ro.disconnect();
       Object.values(markersRef.current).forEach((m) => m.remove());
       markersRef.current = {};
+      userMarkerRef.current?.remove();
+      userMarkerRef.current = null;
       readyRef.current = false;
       map.remove();
       mapRef.current = null;
@@ -763,7 +765,8 @@ export default function CityMap({
   }, [selectedStopId]);
 
 
-  // Localização do usuário (ou do veículo em tempo real, ex.: TESTE-1)
+  // Localização do usuário (ou do veículo em tempo real, ex.: TESTE-1).
+  // O marcador se move, mas a câmera permanece livre para o usuário explorar o mapa.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !userLocation) return;
@@ -785,11 +788,35 @@ export default function CityMap({
         el.innerHTML = `
           <span class="mobisl-live-ring"></span>
           <span class="mobisl-live-ring mobisl-live-ring--slow"></span>
-          <span class="mobisl-live-dot"></span>
+          <span class="mobisl-live-bus" aria-hidden="true">
+            <svg viewBox="0 0 52 52" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="live-bus-body" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#ff9a3d"/>
+                  <stop offset="48%" stop-color="#ff4d1c"/>
+                  <stop offset="100%" stop-color="#c92c08"/>
+                </linearGradient>
+                <filter id="live-bus-shadow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feDropShadow dx="0" dy="3" stdDeviation="2.7" flood-color="#111827" flood-opacity=".55"/>
+                </filter>
+              </defs>
+              <g filter="url(#live-bus-shadow)">
+                <rect x="14" y="19" width="24" height="6" rx="2.5" fill="#111827"/>
+                <rect x="14" y="30" width="24" height="6" rx="2.5" fill="#111827"/>
+                <rect x="15" y="5" width="22" height="42" rx="8" fill="url(#live-bus-body)" stroke="#ffffff" stroke-width="2.5"/>
+                <path d="M19 9.5h14l-1.6 8H20.6L19 9.5Z" fill="#dff2ff" stroke="#ffffff" stroke-width="1"/>
+                <rect x="19" y="21" width="14" height="12" rx="3" fill="#ffffff" opacity=".22"/>
+                <path d="M26 21v12" stroke="#ffffff" stroke-width="1" opacity=".45"/>
+                <path d="M20 42h12" stroke="#7c1804" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="20.5" cy="8.5" r="1.6" fill="#fff7c2"/>
+                <circle cx="31.5" cy="8.5" r="1.6" fill="#fff7c2"/>
+              </g>
+            </svg>
+          </span>
           <span class="mobisl-live-chip">
-            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 21s-6-5.6-6-11a6 6 0 1 1 12 0c0 5.4-6 11-6 11z"/>
-              <circle cx="12" cy="10" r="2.2" fill="currentColor" stroke="none"/>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M6 17V6.5C6 4.6 7.8 3 10 3h4c2.2 0 4 1.6 4 3.5V17"/>
+              <path d="M6 13h12M8 17v2m8-2v2"/><circle cx="9" cy="16" r="1" fill="currentColor"/><circle cx="15" cy="16" r="1" fill="currentColor"/>
             </svg>
             ${liveLabel}
           </span>
@@ -807,7 +834,6 @@ export default function CityMap({
     } else {
       userMarkerRef.current.setLngLat([userLocation.lon, userLocation.lat]);
     }
-    map.easeTo({ center: [userLocation.lon, userLocation.lat], zoom: 14.5, duration: 900 });
   }, [userLocation, liveLabel]);
 
   return (
