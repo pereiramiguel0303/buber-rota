@@ -131,6 +131,7 @@ function MapPage() {
             selectedStopId={search.ponto}
             userLocation={userLocation ?? coords}
             liveLabel={userLocation ? "TESTE-1" : undefined}
+            liveBearing={liveBearing}
             onSelectBus={(id) =>
               setSelection({ onibus: id, linha: buses.find((b) => b.id === id)?.lineId })
             }
