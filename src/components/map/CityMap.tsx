@@ -13,6 +13,8 @@ export interface CityMapProps {
   selectedStopId?: string | undefined;
   userLocation?: { lat: number; lon: number } | null | undefined;
   liveLabel?: string | undefined;
+  /** Direção (graus, 0 = norte) vinda do GPS. Use null/undefined ou valor negativo quando desconhecida. */
+  liveBearing?: number | null | undefined;
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
@@ -283,6 +285,7 @@ export default function CityMap({
   selectedStopId,
   userLocation,
   liveLabel,
+  liveBearing,
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
@@ -788,6 +791,11 @@ export default function CityMap({
         el.innerHTML = `
           <span class="mobisl-live-ring"></span>
           <span class="mobisl-live-ring mobisl-live-ring--slow"></span>
+          <span class="mobisl-live-heading" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 0.5 19 12 12 8.6 5 12Z" fill="#ff4d1c" stroke="#ffffff" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+          </span>
           <span class="mobisl-live-bus" aria-hidden="true">
             <svg viewBox="0 0 52 52" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -834,7 +842,18 @@ export default function CityMap({
     } else {
       userMarkerRef.current.setLngLat([userLocation.lon, userLocation.lat]);
     }
-  }, [userLocation, liveLabel]);
+
+    // Aponta o ônibus ao vivo para a direção informada pelo GPS (graus, 0 = norte).
+    if (isLive) {
+      const element = userMarkerRef.current?.getElement?.();
+      const hasBearing =
+        typeof liveBearing === "number" && Number.isFinite(liveBearing) && liveBearing >= 0;
+      if (element) {
+        element.style.setProperty("--live-rot", `${hasBearing ? liveBearing % 360 : 0}deg`);
+        element.dataset['heading'] = hasBearing ? "1" : "0";
+      }
+    }
+  }, [userLocation, liveLabel, liveBearing]);
 
   return (
     <div
