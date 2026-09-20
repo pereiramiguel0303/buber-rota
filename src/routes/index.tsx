@@ -1,6 +1,6 @@
 import { ClientOnly, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Crosshair, Locate, Radar, Search, X } from "lucide-react";
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { BusSheet, LineSheet, NearbySheet, StopSheet } from "@/components/transit/sheets";
 import { LineBadge } from "@/components/transit/ui";
 import { CITY_NAME, LINES } from "@/lib/transit/network";
@@ -68,6 +68,9 @@ function MapPage() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [liveBearing, setLiveBearing] = useState<number | null>(null);
 
+  const lastSnappedRef = useRef<{ lat: number; lon: number } | null>(null);
+  const bearingRef = useRef<number | null>(null);
+
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     let cancelled = false;
@@ -75,26 +78,41 @@ function MapPage() {
     void (async () => {
       const { onValue, ref } = await import("firebase/database");
       const { db } = await import("@/lib/firebase");
+      const { snapToRoad, distanceMeters, bearingBetween, smoothBearing } = await import(
+        "@/lib/transit/snap"
+      );
       if (cancelled) return;
 
       const busRef = ref(db, "onibus/TESTE-1");
       unsubscribe = onValue(busRef, (snapshot) => {
         const data = snapshot.val() as
-          | {
-              latitude?: number | string;
-              longitude?: number | string;
-              direcao?: number | string;
-            }
+          | { latitude?: number | string; longitude?: number | string }
           | null;
         if (!data) return;
         const lat = Number.parseFloat(String(data.latitude));
         const lon = Number.parseFloat(String(data.longitude));
-        if (Number.isFinite(lat) && Number.isFinite(lon)) {
-          setUserLocation({ lat, lon });
-        }
-        // Direção (graus, 0 = norte). O GPS envia -1 quando ainda não sabe o rumo.
-        const bearing = Number.parseFloat(String(data.direcao));
-        setLiveBearing(Number.isFinite(bearing) && bearing >= 0 ? bearing : null);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+        void (async () => {
+          // Encaixa o ponto bruto do GPS na rua mais próxima.
+          const snapped = await snapToRoad({ lat, lon });
+          if (cancelled) return;
+
+          const prev = lastSnappedRef.current;
+          if (prev) {
+            const moved = distanceMeters(prev, snapped);
+            // Só recalcula o rumo quando houve deslocamento real (evita tremer parado).
+            if (moved >= 5) {
+              const raw = bearingBetween(prev, snapped);
+              const next = smoothBearing(bearingRef.current, raw);
+              bearingRef.current = next;
+              setLiveBearing(next);
+            }
+            if (moved < 1.5) return;
+          }
+          lastSnappedRef.current = snapped;
+          setUserLocation(snapped);
+        })();
       });
     })();
 
