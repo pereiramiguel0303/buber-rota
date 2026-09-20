@@ -67,6 +67,13 @@ function MapPage() {
   // em vez da geolocalização do navegador.
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [liveBearing, setLiveBearing] = useState<number | null>(null);
+  const [showLiveInfo, setShowLiveInfo] = useState(false);
+  const [liveStats, setLiveStats] = useState<{
+    speedKmh: number;
+    status: string;
+    precisao: number | null;
+    updatedAt: number | null;
+  } | null>(null);
 
   const lastSnappedRef = useRef<{ lat: number; lon: number } | null>(null);
   const bearingRef = useRef<number | null>(null);
@@ -86,9 +93,28 @@ function MapPage() {
       const busRef = ref(db, "onibus/TESTE-1");
       unsubscribe = onValue(busRef, (snapshot) => {
         const data = snapshot.val() as
-          | { latitude?: number | string; longitude?: number | string }
+          | {
+              latitude?: number | string;
+              longitude?: number | string;
+              velocidade?: number | string;
+              status?: string;
+              precisao?: number | string;
+              timestamp?: number | string;
+            }
           | null;
         if (!data) return;
+
+        const speedRaw = Number.parseFloat(String(data.velocidade));
+        const precisaoRaw = Number.parseFloat(String(data.precisao));
+        const tsRaw = Number(data.timestamp);
+        setLiveStats({
+          // O GPS envia a velocidade em m/s — convertemos para km/h.
+          speedKmh: Number.isFinite(speedRaw) ? Math.max(0, speedRaw) * 3.6 : 0,
+          status: data.status ?? "online",
+          precisao: Number.isFinite(precisaoRaw) ? precisaoRaw : null,
+          updatedAt: Number.isFinite(tsRaw) ? tsRaw : null,
+        });
+
         const lat = Number.parseFloat(String(data.latitude));
         const lon = Number.parseFloat(String(data.longitude));
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
@@ -130,6 +156,7 @@ function MapPage() {
 
   const setSelection = (patch: MapSearch) => {
     setShowNearby(false);
+    setShowLiveInfo(false);
     void navigate({ search: () => patch });
   };
 
@@ -155,6 +182,10 @@ function MapPage() {
             }
             onSelectStop={(id) => setSelection({ ponto: id, linha: search.linha })}
             onBackgroundClick={() => setSelection({})}
+            onLiveClick={() => {
+              setShowNearby(false);
+              setShowLiveInfo(true);
+            }}
             onStatus={setMapStatus}
           />
 
