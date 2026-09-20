@@ -1,5 +1,5 @@
 import { ClientOnly, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Crosshair, Locate, Radar, Search, X } from "lucide-react";
+import { Crosshair, Gauge, Locate, Radar, Satellite, Search, X } from "lucide-react";
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { BusSheet, LineSheet, NearbySheet, StopSheet } from "@/components/transit/sheets";
 import { LineBadge } from "@/components/transit/ui";
@@ -67,6 +67,13 @@ function MapPage() {
   // em vez da geolocalização do navegador.
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [liveBearing, setLiveBearing] = useState<number | null>(null);
+  const [showLiveInfo, setShowLiveInfo] = useState(false);
+  const [liveStats, setLiveStats] = useState<{
+    speedKmh: number;
+    status: string;
+    precisao: number | null;
+    updatedAt: number | null;
+  } | null>(null);
 
   const lastSnappedRef = useRef<{ lat: number; lon: number } | null>(null);
   const bearingRef = useRef<number | null>(null);
@@ -86,9 +93,28 @@ function MapPage() {
       const busRef = ref(db, "onibus/TESTE-1");
       unsubscribe = onValue(busRef, (snapshot) => {
         const data = snapshot.val() as
-          | { latitude?: number | string; longitude?: number | string }
+          | {
+              latitude?: number | string;
+              longitude?: number | string;
+              velocidade?: number | string;
+              status?: string;
+              precisao?: number | string;
+              timestamp?: number | string;
+            }
           | null;
         if (!data) return;
+
+        const speedRaw = Number.parseFloat(String(data.velocidade));
+        const precisaoRaw = Number.parseFloat(String(data.precisao));
+        const tsRaw = Number(data.timestamp);
+        setLiveStats({
+          // O GPS envia a velocidade em m/s — convertemos para km/h.
+          speedKmh: Number.isFinite(speedRaw) ? Math.max(0, speedRaw) * 3.6 : 0,
+          status: data.status ?? "online",
+          precisao: Number.isFinite(precisaoRaw) ? precisaoRaw : null,
+          updatedAt: Number.isFinite(tsRaw) ? tsRaw : null,
+        });
+
         const lat = Number.parseFloat(String(data.latitude));
         const lon = Number.parseFloat(String(data.longitude));
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
@@ -130,6 +156,7 @@ function MapPage() {
 
   const setSelection = (patch: MapSearch) => {
     setShowNearby(false);
+    setShowLiveInfo(false);
     void navigate({ search: () => patch });
   };
 
@@ -155,6 +182,10 @@ function MapPage() {
             }
             onSelectStop={(id) => setSelection({ ponto: id, linha: search.linha })}
             onBackgroundClick={() => setSelection({})}
+            onLiveClick={() => {
+              setShowNearby(false);
+              setShowLiveInfo(true);
+            }}
             onStatus={setMapStatus}
           />
 
@@ -316,6 +347,70 @@ function MapPage() {
           operação
         </p>
       </div>
+
+      {/* Painel do ônibus ao vivo (TESTE-1) */}
+      {showLiveInfo && userLocation && (
+        <div className="absolute inset-x-3 bottom-24 z-30 mx-auto max-w-md">
+          <div className="rounded-3xl border border-border bg-card/97 p-4 shadow-[var(--shadow-float)] backdrop-blur">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#ff4d1c] text-white">
+                <Gauge className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold">TESTE-1 · GPS ao vivo</p>
+                <p className="text-xs text-muted-foreground">
+                  {liveStats?.status === "online" ? "Transmitindo em tempo real" : "Sem sinal no momento"}
+                  {liveStats?.updatedAt
+                    ? ` · ${Math.max(0, Math.round((Date.now() - liveStats.updatedAt) / 1000))}s atrás`
+                    : ""}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLiveInfo(false)}
+                aria-label="Fechar informações"
+                className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-2xl bg-secondary/70 px-3 py-2 text-center">
+                <p className="text-lg font-extrabold leading-tight tabular-nums">
+                  {liveStats ? liveStats.speedKmh.toFixed(0) : "—"}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  km/h
+                </p>
+              </div>
+              <div className="rounded-2xl bg-secondary/70 px-3 py-2 text-center">
+                <p className="text-lg font-extrabold leading-tight tabular-nums">
+                  {liveBearing !== null && liveBearing >= 0 ? `${Math.round(liveBearing)}°` : "—"}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  direção
+                </p>
+              </div>
+              <div className="rounded-2xl bg-secondary/70 px-3 py-2 text-center">
+                <p className="text-lg font-extrabold leading-tight tabular-nums">
+                  {liveStats?.precisao !== null && liveStats?.precisao !== undefined
+                    ? `${liveStats.precisao.toFixed(0)}m`
+                    : "—"}
+                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  precisão
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+              <Satellite className="h-3.5 w-3.5" />
+              {userLocation.lat.toFixed(5)}, {userLocation.lon.toFixed(5)} · fonte: GPS NEO-6M (Arduino Mega)
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Painéis inferiores */}
       {showNearby && (

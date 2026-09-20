@@ -18,6 +18,7 @@ export interface CityMapProps {
   onSelectBus: (id: string) => void;
   onSelectStop: (id: string) => void;
   onBackgroundClick: () => void;
+  onLiveClick?: (() => void) | undefined;
   onStatus?: ((status: "loading" | "ready" | "error") => void) | undefined;
 }
 
@@ -289,6 +290,7 @@ export default function CityMap({
   onSelectBus,
   onSelectStop,
   onBackgroundClick,
+  onLiveClick,
   onStatus,
 }: CityMapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -296,8 +298,8 @@ export default function CityMap({
   const markersRef = useRef<Record<string, maplibregl.Marker>>({});
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   const readyRef = useRef(false);
-  const handlers = useRef({ onSelectBus, onSelectStop, onBackgroundClick, onStatus });
-  handlers.current = { onSelectBus, onSelectStop, onBackgroundClick, onStatus };
+  const handlers = useRef({ onSelectBus, onSelectStop, onBackgroundClick, onLiveClick, onStatus });
+  handlers.current = { onSelectBus, onSelectStop, onBackgroundClick, onLiveClick, onStatus };
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -829,6 +831,13 @@ export default function CityMap({
             ${liveLabel}
           </span>
         `;
+        el.style.cursor = "pointer";
+        el.setAttribute("role", "button");
+        el.setAttribute("aria-label", `${liveLabel} — ver informações ao vivo`);
+        el.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          handlers.current.onLiveClick?.();
+        });
       } else {
         el.className = "mobisl-pulse";
         el.style.cssText =
